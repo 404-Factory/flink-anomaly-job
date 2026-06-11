@@ -10,4 +10,5 @@ COPY --from=build /app/build/libs/*.jar flink-anomaly-job.jar
 ENTRYPOINT ["java", \
   "--add-opens", "java.base/java.util=ALL-UNNAMED", \
   "--add-opens", "java.base/java.lang=ALL-UNNAMED", \
+  "--add-opens", "java.base/java.time=ALL-UNNAMED", \
   "-jar", "/opt/flink/usrlib/flink-anomaly-job.jar"]
