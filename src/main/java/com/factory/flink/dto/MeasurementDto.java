@@ -1,11 +1,12 @@
 package com.factory.flink.dto;
 
 import java.io.Serializable;
+import java.time.Instant;
 import java.util.List;
 
 public record MeasurementDto(
     Integer sequence,
-    String measuredAt,
+    Instant measuredAt,
     String status,
     List<SensorReadingDto> sensors
 ) implements Serializable {

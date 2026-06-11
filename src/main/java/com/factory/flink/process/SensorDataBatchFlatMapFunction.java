@@ -6,7 +6,6 @@ import com.factory.flink.dto.SensorReadingDto;
 import com.factory.flink.dto.SensorReadingEvent;
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.util.Collector;
-import java.time.OffsetDateTime;
 
 public class SensorDataBatchFlatMapFunction implements FlatMapFunction<SensorDataBatchDto, SensorReadingEvent> {
     private static final long serialVersionUID = 1L;
@@ -18,17 +17,11 @@ public class SensorDataBatchFlatMapFunction implements FlatMapFunction<SensorDat
         }
 
         for (MeasurementDto measurement : batch.measurements()) {
-            String measuredAt = measurement.measuredAt();
-            long epochMilli;
-            try {
-                epochMilli = OffsetDateTime.parse(measuredAt).toInstant().toEpochMilli();
-            } catch (Exception e) {
+            if (measurement.measuredAt() == null || measurement.sensors() == null) {
                 continue;
             }
 
-            if (measurement.sensors() == null) {
-                continue;
-            }
+            long epochMilli = measurement.measuredAt().toEpochMilli();
 
             for (SensorReadingDto sensor : measurement.sensors()) {
                 SensorReadingEvent event = SensorReadingEvent.builder()
@@ -38,7 +31,6 @@ public class SensorDataBatchFlatMapFunction implements FlatMapFunction<SensorDat
                         .value(sensor.value())
                         .recipeMin(sensor.recipeMin())
                         .recipeMax(sensor.recipeMax())
-                        .measuredAt(measuredAt)
                         .measuredAtEpochMilli(epochMilli)
                         .build();
                 out.collect(event);
