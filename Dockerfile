@@ -1,0 +1,10 @@
+FROM gradle:8.5-jdk17 AS build
+WORKDIR /app
+COPY build.gradle settings.gradle ./
+COPY gradle ./gradle
+COPY src ./src
+RUN gradle jar --no-daemon
+
+FROM flink:1.18.1-java17
+WORKDIR /opt/flink/usrlib
+COPY --from=build /app/build/libs/*.jar flink-anomaly-job.jar

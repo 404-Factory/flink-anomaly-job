@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flink-anomaly-job
+  namespace: flink
+  labels:
+    app: flink-anomaly-job
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flink-anomaly-job
+  template:
+    metadata:
+      labels:
+        app: flink-anomaly-job
+    spec:
+      containers:
+        - name: flink-anomaly-job
+          image: $IMAGE:$IMAGE_TAG
+          env:
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: "sigma-kafka-kafka-bootstrap.default.svc.cluster.local:9092"
+            - name: KAFKA_SOURCE_TOPIC
+              value: "fab-semiconductor-001"
+            - name: KAFKA_SINK_TOPIC
+              value: "sensor-violations"
+            - name: KAFKA_ANOMALY_EVENT_TOPIC
+              value: "anomaly.AnomalyCreated"
+            - name: KAFKA_GROUP_ID
+              value: "flink-anomaly-group"
+          resources:
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+      restartPolicy: Always

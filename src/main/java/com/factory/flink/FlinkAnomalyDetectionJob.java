@@ -6,7 +6,7 @@ import com.factory.flink.dto.SensorViolationEvent;
 import com.factory.flink.process.AnomalyEvaluationProcessFunction;
 import com.factory.flink.process.SensorDataBatchFlatMapFunction;
 import com.factory.flink.serialization.SensorDataBatchDeserializer;
-import com.factory.flink.serialization.SensorViolationSerializer;
+import com.factory.flink.serialization.SensorViolationEnvelopeSerializer;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.connector.kafka.sink.KafkaRecordSerializationSchema;
 import org.apache.flink.connector.kafka.sink.KafkaSink;
@@ -17,32 +17,38 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import java.time.Duration;
 
 public class FlinkAnomalyDetectionJob {
+
+    private static String env(String key, String defaultValue) {
+        String v = System.getenv(key);
+        return (v != null && !v.isBlank()) ? v : defaultValue;
+    }
+
     public static void main(String[] args) throws Exception {
+        final String bootstrapServers = env("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092");
+        final String sourceTopic      = env("KAFKA_SOURCE_TOPIC",      "fab-semiconductor-001");
+        final String sinkTopic        = env("KAFKA_SINK_TOPIC",        "sensor-violations");
+        final String groupId          = env("KAFKA_GROUP_ID",          "flink-anomaly-group");
+
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
-        // 1. Configure Kafka Source to read SensorDataBatchDto JSON messages
         KafkaSource<SensorDataBatchDto> kafkaSource = KafkaSource.<SensorDataBatchDto>builder()
-                .setBootstrapServers("localhost:9092")
-                .setTopics("fab-semiconductor-001")
-                .setGroupId("flink-anomaly-group")
+                .setBootstrapServers(bootstrapServers)
+                .setTopics(sourceTopic)
+                .setGroupId(groupId)
                 .setStartingOffsets(OffsetsInitializer.latest())
                 .setValueOnlyDeserializer(new SensorDataBatchDeserializer())
                 .build();
 
-        // 2. Read raw batches without watermarks first (we will assign them after flatmapping)
         DataStream<SensorDataBatchDto> batchStream = env.fromSource(
                 kafkaSource,
                 WatermarkStrategy.noWatermarks(),
                 "KafkaBatchSource"
         );
 
-        // 3. Flatten the 1-minute batch of measurements into individual 1-second sensor reading events
         DataStream<SensorReadingEvent> flattenedStream = batchStream
                 .flatMap(new SensorDataBatchFlatMapFunction())
                 .name("SensorBatchFlattener");
 
-        // 4. Assign Event Time and Watermarks to the individual sensor reading events
-        // Allow up to 70 seconds of out-of-orderness to handle the 1-minute batch arrival lag
         WatermarkStrategy<SensorReadingEvent> watermarkStrategy = WatermarkStrategy
                 .<SensorReadingEvent>forBoundedOutOfOrderness(Duration.ofSeconds(70))
                 .withTimestampAssigner((event, timestamp) -> event.getMeasuredAtEpochMilli());
@@ -51,26 +57,23 @@ public class FlinkAnomalyDetectionJob {
                 .assignTimestampsAndWatermarks(watermarkStrategy)
                 .name("EventTimeWatermarking");
 
-        // 5. Partition the stream by equipmentId and sensorType, and apply the Nelson / Bias rule evaluators
         DataStream<SensorViolationEvent> violationStream = sensorStream
                 .keyBy(event -> event.getEquipmentId() + ":" + event.getSensorType())
                 .process(new AnomalyEvaluationProcessFunction())
                 .name("AnomalyRuleEngine");
 
-        // 6. Configure Kafka Sink to emit violation events to 'sensor-violations' topic
         KafkaSink<SensorViolationEvent> kafkaSink = KafkaSink.<SensorViolationEvent>builder()
-                .setBootstrapServers("localhost:9092")
+                .setBootstrapServers(bootstrapServers)
                 .setRecordSerializer(
                         KafkaRecordSerializationSchema.builder()
-                                .setTopic("sensor-violations")
-                                .setValueSerializationSchema(new SensorViolationSerializer())
+                                .setTopic(sinkTopic)
+                                .setValueSerializationSchema(new SensorViolationEnvelopeSerializer())
                                 .build()
                 )
                 .build();
 
         violationStream.sinkTo(kafkaSink).name("KafkaViolationSink");
 
-        // Execute Flink Job
         env.execute("Flink Real-time Anomaly Detection Job");
     }
 }
