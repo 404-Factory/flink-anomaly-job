@@ -25,8 +25,6 @@ spec:
               value: "fab-semiconductor-001"
             - name: KAFKA_SINK_TOPIC
               value: "sensor-violations"
-            - name: KAFKA_ANOMALY_EVENT_TOPIC
-              value: "anomaly.AnomalyCreated"
             - name: KAFKA_GROUP_ID
               value: "flink-anomaly-group"
           resources:
