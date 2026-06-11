@@ -12,25 +12,25 @@ public class SensorDataBatchFlatMapFunction implements FlatMapFunction<SensorDat
 
     @Override
     public void flatMap(SensorDataBatchDto batch, Collector<SensorReadingEvent> out) throws Exception {
-        if (batch.measurements() == null) {
+        if (batch.getMeasurements() == null) {
             return;
         }
 
-        for (MeasurementDto measurement : batch.measurements()) {
-            if (measurement.measuredAt() == null || measurement.sensors() == null) {
+        for (MeasurementDto measurement : batch.getMeasurements()) {
+            if (measurement.getMeasuredAt() == null || measurement.getSensors() == null) {
                 continue;
             }
 
-            long epochMilli = measurement.measuredAt().toEpochMilli();
+            long epochMilli = measurement.getMeasuredAt().toEpochMilli();
 
-            for (SensorReadingDto sensor : measurement.sensors()) {
+            for (SensorReadingDto sensor : measurement.getSensors()) {
                 SensorReadingEvent event = SensorReadingEvent.builder()
-                        .equipmentId(batch.equipmentId())
-                        .sensorId(sensor.sensorId())
-                        .sensorType(sensor.sensorType())
-                        .value(sensor.value())
-                        .recipeMin(sensor.recipeMin())
-                        .recipeMax(sensor.recipeMax())
+                        .equipmentId(batch.getEquipmentId())
+                        .sensorId(sensor.getSensorId())
+                        .sensorType(sensor.getSensorType())
+                        .value(sensor.getValue())
+                        .recipeMin(sensor.getRecipeMin())
+                        .recipeMax(sensor.getRecipeMax())
                         .measuredAtEpochMilli(epochMilli)
                         .build();
                 out.collect(event);
