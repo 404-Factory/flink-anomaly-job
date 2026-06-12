@@ -66,7 +66,7 @@ public class AnomalyEvaluationProcessFunction extends KeyedProcessFunction<Strin
         evaluateRules(validSamples, oneMinuteSamples, newEvent, out);
     }
 
-    private void evaluateRules(
+    void evaluateRules(
             List<SensorReadingEvent> fiveMinSamples,
             List<SensorReadingEvent> oneMinSamples,
             SensorReadingEvent currentEvent,

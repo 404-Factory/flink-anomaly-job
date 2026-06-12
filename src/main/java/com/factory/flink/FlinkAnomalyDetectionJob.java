@@ -6,7 +6,7 @@ import com.factory.flink.dto.SensorViolationEvent;
 import com.factory.flink.process.AnomalyEvaluationProcessFunction;
 import com.factory.flink.process.SensorDataBatchFlatMapFunction;
 import com.factory.flink.serialization.SensorDataBatchDeserializer;
-import com.factory.flink.serialization.SensorViolationEnvelopeSerializer;
+import com.factory.flink.serialization.SensorViolationSerializer;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.connector.kafka.sink.KafkaRecordSerializationSchema;
 import org.apache.flink.connector.kafka.sink.KafkaSink;
@@ -67,7 +67,7 @@ public class FlinkAnomalyDetectionJob {
                 .setRecordSerializer(
                         KafkaRecordSerializationSchema.builder()
                                 .setTopic(sinkTopic)
-                                .setValueSerializationSchema(new SensorViolationEnvelopeSerializer())
+                                .setValueSerializationSchema(new SensorViolationSerializer())
                                 .build()
                 )
                 .build();
