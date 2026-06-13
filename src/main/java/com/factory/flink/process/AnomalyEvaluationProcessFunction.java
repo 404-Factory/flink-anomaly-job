@@ -8,6 +8,7 @@ import com.factory.flink.dto.SensorViolationEvent;
 import com.factory.flink.dto.Severity;
 import org.apache.flink.api.common.state.ListState;
 import org.apache.flink.api.common.state.ListStateDescriptor;
+import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
@@ -22,14 +23,23 @@ public class AnomalyEvaluationProcessFunction extends KeyedProcessFunction<Strin
 
     // Flink list state to store 5 minutes of samples for each key (equipment:sensorType)
     private transient ListState<SensorReadingEvent> sampleState;
+    // Flink value state to remember the last detected severity for state-change deduplication
+    private transient ValueState<Severity> lastSeverityState;
 
     @Override
     public void open(Configuration parameters) throws Exception {
-        ListStateDescriptor<SensorReadingEvent> descriptor = new ListStateDescriptor<>(
+        ListStateDescriptor<SensorReadingEvent> sampleDescriptor = new ListStateDescriptor<>(
                 "sensor-samples",
                 TypeInformation.of(SensorReadingEvent.class)
         );
-        sampleState = getRuntimeContext().getListState(descriptor);
+        sampleState = getRuntimeContext().getListState(sampleDescriptor);
+
+        org.apache.flink.api.common.state.ValueStateDescriptor<Severity> severityDescriptor = 
+                new org.apache.flink.api.common.state.ValueStateDescriptor<>(
+                        "last-severity",
+                        TypeInformation.of(Severity.class)
+                );
+        lastSeverityState = getRuntimeContext().getState(severityDescriptor);
     }
 
     @Override
@@ -71,7 +81,7 @@ public class AnomalyEvaluationProcessFunction extends KeyedProcessFunction<Strin
             List<SensorReadingEvent> oneMinSamples,
             SensorReadingEvent currentEvent,
             Collector<SensorViolationEvent> out
-    ) {
+    ) throws Exception {
         // Enforce bootstrapping - skip evaluation if we don't have enough history
         if (fiveMinSamples.size() < 240) {
             return;
@@ -80,26 +90,54 @@ public class AnomalyEvaluationProcessFunction extends KeyedProcessFunction<Strin
         Double recipeMin = currentEvent.getRecipeMin();
         Double recipeMax = currentEvent.getRecipeMax();
 
+        RuleResult finalResult = null;
+        int activeSampleCount = fiveMinSamples.size();
+
         // 1. Nelson Rule 1 Evaluation (Recipe limit violations in last 5 minutes)
         RuleResult nelson1Result = evaluateNelsonRule1(fiveMinSamples, recipeMin, recipeMax);
         if (nelson1Result.isDetected()) {
-            out.collect(SensorViolationEvent.from(currentEvent, nelson1Result, fiveMinSamples.size()));
-            return; // Exit early following priority rankings
-        }
+            finalResult = nelson1Result;
+        } else {
+            // 2. Nelson Rule 3 Evaluation (Continual trend in last 1 minute)
+            if (oneMinSamples.size() >= 42) {
+                RuleResult nelson3Result = evaluateNelsonRule3(oneMinSamples, recipeMin, recipeMax);
+                if (nelson3Result.isDetected()) {
+                    finalResult = nelson3Result;
+                    activeSampleCount = oneMinSamples.size();
+                }
+            }
 
-        // 2. Nelson Rule 3 Evaluation (Continual trend in last 1 minute)
-        if (oneMinSamples.size() >= 42) {
-            RuleResult nelson3Result = evaluateNelsonRule3(oneMinSamples, recipeMin, recipeMax);
-            if (nelson3Result.isDetected()) {
-                out.collect(SensorViolationEvent.from(currentEvent, nelson3Result, oneMinSamples.size()));
-                return;
+            // 3. Bias Rule Evaluation (Mean shift in last 5 minutes)
+            if (finalResult == null) {
+                RuleResult biasResult = evaluateBiasRule(fiveMinSamples, recipeMin, recipeMax);
+                if (biasResult.isDetected()) {
+                    finalResult = biasResult;
+                }
             }
         }
 
-        // 3. Bias Rule Evaluation (Mean shift in last 5 minutes)
-        RuleResult biasResult = evaluateBiasRule(fiveMinSamples, recipeMin, recipeMax);
-        if (biasResult.isDetected()) {
-            out.collect(SensorViolationEvent.from(currentEvent, biasResult, fiveMinSamples.size()));
+        // 4. State Machine & State Change Deduplication
+        Severity lastSeverity = lastSeverityState.value();
+        Severity currentSeverity = (finalResult != null) ? finalResult.getSeverity() : null;
+
+        if (currentSeverity != lastSeverity) {
+            lastSeverityState.update(currentSeverity);
+
+            if (currentSeverity != null) {
+                // Transition to an anomalous state: emit violation event
+                out.collect(SensorViolationEvent.from(currentEvent, finalResult, activeSampleCount));
+            } else {
+                // Transition back to normal (recovery): emit recovery event (severity is null)
+                SensorViolationEvent recoveryEvent = SensorViolationEvent.builder()
+                        .equipmentId(currentEvent.getEquipmentId())
+                        .sensorId(currentEvent.getSensorId())
+                        .sensorType(currentEvent.getSensorType())
+                        .severity(null) // null indicates normal recovery
+                        .detectedAt(java.time.Instant.ofEpochMilli(currentEvent.getMeasuredAtEpochMilli()))
+                        .reason("정상 범위 복구 (물리적 복구)")
+                        .build();
+                out.collect(recoveryEvent);
+            }
         }
     }
 

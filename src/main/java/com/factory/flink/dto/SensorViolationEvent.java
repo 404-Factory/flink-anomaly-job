@@ -14,7 +14,8 @@ import lombok.NoArgsConstructor;
 public class SensorViolationEvent implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private String equipmentId;
+    private Long equipmentId;
+    private String sensorId;
     private String sensorType;
     private RuleName ruleName;
     private AnomalyType anomalyType;
@@ -32,6 +33,7 @@ public class SensorViolationEvent implements Serializable {
     public static SensorViolationEvent from(SensorReadingEvent reading, RuleResult result, int sampleCount) {
         return SensorViolationEvent.builder()
                 .equipmentId(reading.getEquipmentId())
+                .sensorId(reading.getSensorId())
                 .sensorType(reading.getSensorType())
                 .ruleName(result.getRuleName())
                 .anomalyType(result.getAnomalyType())
