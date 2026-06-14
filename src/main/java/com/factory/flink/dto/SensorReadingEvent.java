@@ -19,6 +19,5 @@ public class SensorReadingEvent implements Serializable {
     private Double value;
     private Double recipeMin;
     private Double recipeMax;
-    private String measuredAt;
     private long measuredAtEpochMilli;
 }

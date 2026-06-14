@@ -95,7 +95,7 @@ public class FlinkAnomalyDetectionJob {
                         json.put("value", element.getValue());
                         json.put("recipeMin", element.getRecipeMin());
                         json.put("recipeMax", element.getRecipeMax());
-                        json.put("measuredAt", element.getMeasuredAt());
+                        json.put("measuredAt", java.time.Instant.ofEpochMilli(element.getMeasuredAtEpochMilli()).toString());
                         json.put("measuredAtEpochMilli", element.getMeasuredAtEpochMilli());
 
                         IndexRequest indexRequest = Requests.indexRequest()
@@ -141,7 +141,7 @@ public class FlinkAnomalyDetectionJob {
                     record.put("value", event.getValue());
                     record.put("recipeMin", event.getRecipeMin());
                     record.put("recipeMax", event.getRecipeMax());
-                    record.put("measuredAt", event.getMeasuredAt());
+                    record.put("measuredAt", java.time.Instant.ofEpochMilli(event.getMeasuredAtEpochMilli()).toString());
                     record.put("measuredAtEpochMilli", event.getMeasuredAtEpochMilli());
                     return record;
                 }

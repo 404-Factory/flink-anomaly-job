@@ -11,7 +11,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SensorViolationPayload {
-    private String equipmentId;
+    private Long equipmentId;
+    private String sensorId;
     private String sensorType;
     private String ruleName;
     private String anomalyType;
@@ -29,6 +30,7 @@ public class SensorViolationPayload {
     public static SensorViolationPayload from(SensorViolationEvent event) {
         return SensorViolationPayload.builder()
             .equipmentId(event.getEquipmentId())
+            .sensorId(event.getSensorId())
             .sensorType(event.getSensorType())
             .ruleName(event.getRuleName() != null ? event.getRuleName().name() : null)
             .anomalyType(event.getAnomalyType() != null ? event.getAnomalyType().name() : null)

@@ -76,7 +76,7 @@ public class AnomalyEvaluationProcessFunction extends KeyedProcessFunction<Strin
         evaluateRules(validSamples, oneMinuteSamples, newEvent, out);
     }
 
-    private void evaluateRules(
+    void evaluateRules(
             List<SensorReadingEvent> fiveMinSamples,
             List<SensorReadingEvent> oneMinSamples,
             SensorReadingEvent currentEvent,
@@ -117,11 +117,16 @@ public class AnomalyEvaluationProcessFunction extends KeyedProcessFunction<Strin
         }
 
         // 4. State Machine & State Change Deduplication
-        Severity lastSeverity = lastSeverityState.value();
+        Severity lastSeverity = null;
+        if (lastSeverityState != null) {
+            lastSeverity = lastSeverityState.value();
+        }
         Severity currentSeverity = (finalResult != null) ? finalResult.getSeverity() : null;
 
         if (currentSeverity != lastSeverity) {
-            lastSeverityState.update(currentSeverity);
+            if (lastSeverityState != null) {
+                lastSeverityState.update(currentSeverity);
+            }
 
             if (currentSeverity != null) {
                 // Transition to an anomalous state: emit violation event
