@@ -25,8 +25,12 @@ public class SensorViolationEnvelopeSerializer implements SerializationSchema<Se
             objectMapper = buildMapper();
         }
         try {
+            String severityStr = element.getSeverity() != null ? element.getSeverity().name() : "NORMAL";
+            String sourceKey = "violation-" + element.getEquipmentId() + "-" + element.getSensorId() + "-" + element.getDetectedAt().toEpochMilli() + "-" + severityStr;
+            String idempotencyKey = UUID.nameUUIDFromBytes(sourceKey.getBytes(java.nio.charset.StandardCharsets.UTF_8)).toString();
+
             EventEnvelope<SensorViolationPayload> envelope = EventEnvelope.<SensorViolationPayload>builder()
-                .idempotencyKey(UUID.randomUUID().toString())
+                .idempotencyKey(idempotencyKey)
                 .eventType("SensorViolation")
                 .envelopeType("domain")
                 .aggregateType("Equipment")
