@@ -39,7 +39,7 @@ public final class SensorRecordParquetSink {
 
         return FileSink
                 .forBulkFormat(new Path(outputPath), new SensorRecordBulkWriterFactory(parquetFactory))
-                .withBucketAssigner(new EquipmentDateBucketAssigner())
+                .withBucketAssigner(new DeviceDateBucketAssigner())
                 .withRollingPolicy(OnCheckpointRollingPolicy.build())
                 .withOutputFileConfig(fileConfig)
                 .build();

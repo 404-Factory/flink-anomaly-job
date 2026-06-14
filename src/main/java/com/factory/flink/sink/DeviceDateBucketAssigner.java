@@ -30,12 +30,12 @@ import org.apache.flink.streaming.api.functions.sink.filesystem.bucketassigners.
  * "yesterday" in UTC. Writer and reader must share the same zone, or the batch jobs
  * would target the wrong {@code dt=} partition near midnight.
  */
-public class EquipmentDateBucketAssigner implements BucketAssigner<SensorRecord, String> {
+public class DeviceDateBucketAssigner implements BucketAssigner<SensorRecord, String> {
     private static final long serialVersionUID = 1L;
 
     private static final DateTimeFormatter DATE_FMT =
             DateTimeFormatter.ofPattern("yyyy-MM-dd").withZone(ZoneOffset.UTC);
-    static final String UNKNOWN_EQUIPMENT = "unknown";
+    static final String UNKNOWN_DEVICE = "unknown";
 
     @Override
     public String getBucketId(SensorRecord record, Context context) {
@@ -54,11 +54,11 @@ public class EquipmentDateBucketAssigner implements BucketAssigner<SensorRecord,
      */
     static String sanitize(String raw) {
         if (raw == null || raw.isBlank()) {
-            return UNKNOWN_EQUIPMENT;
+            return UNKNOWN_DEVICE;
         }
         String cleaned = raw.replaceAll("[^A-Za-z0-9._-]", "_");
         // Guard against tokens that are only dots (".", "..") after cleaning.
-        return cleaned.chars().anyMatch(c -> c != '.') ? cleaned : UNKNOWN_EQUIPMENT;
+        return cleaned.chars().anyMatch(c -> c != '.') ? cleaned : UNKNOWN_DEVICE;
     }
 
     @Override
