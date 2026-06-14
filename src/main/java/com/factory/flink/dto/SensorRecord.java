@@ -37,8 +37,8 @@ public class SensorRecord implements Serializable {
     private String measurementStatus;
 
     // ---- sensor-level ----
-    private String sensorId;
-    private String sensorType;
+    private String sensorId; // sensor id: equipment name - sensor name
+    private String sensorType; // sensor type: TEMPERATURE SENSOR
     private Double value;
     private Double recipeMin;
     private Double recipeMax;
