@@ -1,0 +1,71 @@
+# EKS/CI 전용 FlinkDeployment. (로컬 minikube용은 k8s/local/ 참고)
+# CI(reusable-deploy)가 이 디렉터리(k8s/app)를 배포하며 $IMAGE:$IMAGE_TAG 를 ECR 이미지로 치환한다.
+#
+# 사전 조건:
+#   - sigma-eks-cluster 에 Flink Kubernetes Operator 설치돼 있어야 함 (FlinkDeployment CRD).
+#   - serviceAccount 'flink' 는 IRSA 로 S3 권한 부여돼 있어야 함 (정적 키 없이 S3 접근).
+#   - ExternalSecret 이 'flink-unified-job-secrets' Secret 을 생성해야 함 (external-secret.yaml 참고).
+#       → S3_OUTPUT_PATH, OPENSEARCH_HOST, CHECKPOINT_DIR 등 환경별 값이 여기서 주입됨.
+apiVersion: flink.apache.org/v1beta1
+kind: FlinkDeployment
+metadata:
+  name: flink-unified-job
+  namespace: flink
+spec:
+  image: $IMAGE:$IMAGE_TAG          # reusable-deploy 가 ECR 이미지로 치환
+  flinkVersion: v1_18
+  serviceAccount: flink             # IRSA 주석이 달린 SA 여야 S3(IRSA) 접근 가능
+  flinkConfiguration:
+    taskmanager.numberOfTaskSlots: "4"
+    env.java.opts.all: >-
+      --add-opens=java.base/java.util=ALL-UNNAMED
+      --add-opens=java.base/java.lang=ALL-UNNAMED
+      --add-opens=java.base/java.lang.reflect=ALL-UNNAMED
+      --add-opens=java.base/java.io=ALL-UNNAMED
+      --add-opens=java.base/java.nio=ALL-UNNAMED
+      --add-opens=java.base/java.time=ALL-UNNAMED
+    # 체크포인트 저장소는 CHECKPOINT_DIR 환경변수(Secret 주입)로 코드에서 설정한다.
+    # CHECKPOINT_DIR 가 비어있을 때의 폴백만 여기에 둔다.
+    state.checkpoint-storage: jobmanager
+    execution.checkpointing.interval: "30s"
+    # S3 는 IRSA 로 접근 → endpoint/access-key/secret-key 불필요(로컬 MinIO 설정 제거됨).
+  jobManager:
+    resource:
+      memory: "1024m"
+      cpu: 0.5
+  taskManager:
+    resource:
+      memory: "2048m"
+      cpu: 1
+  podTemplate:
+    spec:
+      containers:
+        - name: flink-main-container
+          # 환경별 비밀/설정값은 ExternalSecret 이 만든 Secret 에서 주입.
+          # (S3_OUTPUT_PATH, OPENSEARCH_HOST, CHECKPOINT_DIR, 필요시 OPENSEARCH_USERNAME/PASSWORD 등)
+          envFrom:
+            - secretRef:
+                name: flink-unified-job-secrets
+          # 비밀이 아닌 고정값만 리터럴로 둔다. (Secret 의 같은 키가 있으면 아래 리터럴이 우선하니 중복 주의)
+          env:
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: "sigma-kafka-kafka-bootstrap.default.svc.cluster.local:9092"
+            - name: KAFKA_SOURCE_TOPIC
+              value: "fab-semiconductor-001"
+            - name: KAFKA_GROUP_ID
+              value: "flink-unified-ingestion"
+            - name: OPENSEARCH_PORT
+              value: "9200"
+            - name: OPENSEARCH_SCHEME
+              value: "https"
+            - name: OPENSEARCH_INDEX
+              value: "sensor-realtime"
+            - name: KAFKA_VIOLATIONS_TOPIC
+              value: "sensor-violations"
+            - name: START_FROM_EARLIEST
+              value: "true"
+  job:
+    jarURI: local:///opt/flink/usrlib/flink-unified-job.jar
+    entryClass: com.factory.flink.FlinkUnifiedJob
+    parallelism: 1
+    upgradeMode: stateless

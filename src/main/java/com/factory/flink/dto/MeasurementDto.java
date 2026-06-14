@@ -8,6 +8,10 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * One measurement cycle within a batch. Contains the readings of every sensor
+ * sampled at {@link #measuredAt}.
+ */
 @Data
 @Builder
 @NoArgsConstructor

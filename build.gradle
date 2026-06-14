@@ -1,6 +1,7 @@
 plugins {
     id 'java'
     id 'application'
+    id 'jacoco'
 }
 
 group = 'com.factory'
@@ -12,44 +13,85 @@ repositories {
 
 ext {
     flinkVersion = '1.18.1'
+    flinkKafkaVersion = '3.0.1-1.18'
+    openSearchConnectorVersion = '1.1.0-1.18'
+    parquetVersion = '1.13.1'
+    avroVersion = '1.11.3'
+    hadoopVersion = '3.3.6'
     jacksonVersion = '2.15.2'
     lombokVersion = '1.18.30'
 }
 
 dependencies {
-    // Flink Streaming core
+    // ---- Flink Streaming core ----
     implementation "org.apache.flink:flink-streaming-java:${flinkVersion}"
     implementation "org.apache.flink:flink-clients:${flinkVersion}"
 
-    // Flink Kafka Connector
-    implementation "org.apache.flink:flink-connector-kafka:3.0.1-1.18"
-    implementation "org.apache.flink:flink-connector-opensearch:1.1.0-1.18"
+    // ---- Flink connectors / formats ----
+    implementation "org.apache.flink:flink-connector-kafka:${flinkKafkaVersion}"
     implementation "org.apache.flink:flink-connector-files:${flinkVersion}"
     implementation "org.apache.flink:flink-parquet:${flinkVersion}"
-    implementation "org.apache.avro:avro:1.11.3" // Required for Parquet Avro writer
+    implementation "org.apache.flink:flink-avro:${flinkVersion}"
 
-    // Jackson JSON
+    // ---- OpenSearch sink (realtime branch -> sensor-realtime) ----
+    implementation "org.apache.flink:flink-connector-opensearch:${openSearchConnectorVersion}"
+
+    // ---- Parquet / Avro (columnar S3 sink) ----
+    implementation "org.apache.parquet:parquet-avro:${parquetVersion}"
+    implementation "org.apache.avro:avro:${avroVersion}"
+
+    // Parquet writing needs Hadoop classes on the *application* classpath at runtime —
+    // even though the actual S3 filesystem is served by Flink's flink-s3-fs-hadoop plugin.
+    //   - hadoop-common:                Configuration, Path, codecs
+    //   - hadoop-mapreduce-client-core: ParquetOutputFormat -> FileOutputFormat
+    // Bundling these keeps `java -jar` self-contained.
+    implementation "org.apache.hadoop:hadoop-common:${hadoopVersion}"
+    implementation "org.apache.hadoop:hadoop-mapreduce-client-core:${hadoopVersion}"
+
+    // ---- Jackson JSON (Kafka payload deserialization) ----
     implementation "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${jacksonVersion}"
 
-    // Logging
+    // ---- Logging ----
     implementation 'org.slf4j:slf4j-api:2.0.9'
     implementation 'org.slf4j:slf4j-simple:2.0.9'
 
-    // Lombok
+    // ---- Lombok ----
     compileOnly "org.projectlombok:lombok:${lombokVersion}"
     annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
 
-    // Test
+    // ---- Test ----
     testImplementation "org.junit.jupiter:junit-jupiter:5.10.1"
     testRuntimeOnly "org.junit.platform:junit-platform-launcher"
     testImplementation "org.assertj:assertj-core:3.24.2"
     testCompileOnly "org.projectlombok:lombok:${lombokVersion}"
     testAnnotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+
+    // Flink test harness for stateful operators (dedup process function)
+    testImplementation "org.apache.flink:flink-test-utils:${flinkVersion}"
+    testImplementation "org.apache.flink:flink-streaming-java:${flinkVersion}:tests"
+    testImplementation "org.apache.flink:flink-runtime:${flinkVersion}:tests"
 }
 
 test {
     useJUnitPlatform()
+    finalizedBy jacocoTestReport
+    // Flink uses reflection over java.base internals; JDK 17 needs these opened.
+    jvmArgs += [
+            '--add-opens=java.base/java.util=ALL-UNNAMED',
+            '--add-opens=java.base/java.lang=ALL-UNNAMED',
+            '--add-opens=java.base/java.lang.reflect=ALL-UNNAMED',
+            '--add-opens=java.base/java.io=ALL-UNNAMED',
+            '--add-opens=java.base/java.net=ALL-UNNAMED',
+            '--add-opens=java.base/java.nio=ALL-UNNAMED',
+            '--add-opens=java.base/java.util.concurrent=ALL-UNNAMED',
+            '--add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED',
+            '--add-opens=java.base/sun.nio.ch=ALL-UNNAMED',
+            '--add-opens=java.base/java.lang.invoke=ALL-UNNAMED',
+            '--add-opens=java.base/java.math=ALL-UNNAMED',
+            '--add-opens=java.base/java.text=ALL-UNNAMED',
+            '--add-opens=java.base/java.time=ALL-UNNAMED',
+    ]
 }
 
 tasks.withType(JavaCompile) {
@@ -57,15 +99,66 @@ tasks.withType(JavaCompile) {
 }
 
 application {
-    mainClass = 'com.factory.flink.FlinkAnomalyDetectionJob'
+    mainClass = 'com.factory.flink.FlinkUnifiedJob'
 }
+
+// Classes excluded from coverage: pure Flink wiring / glue that cannot be
+// meaningfully unit-tested without a running cluster.
+def coverageExclusions = [
+        'com/factory/flink/FlinkUnifiedJob*.class',
+        'com/factory/flink/sink/SensorRecordParquetSink*.class',
+        'com/factory/flink/opensearch/SensorRecordOpensearchSink*.class',
+]
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true
+        html.required = true
+    }
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: coverageExclusions)
+        }))
+    }
+}
+
+jacocoTestCoverageVerification {
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: coverageExclusions)
+        }))
+    }
+    violationRules {
+        rule {
+            limit {
+                counter = 'LINE'
+                value = 'COVEREDRATIO'
+                minimum = 0.80
+            }
+        }
+        rule {
+            limit {
+                counter = 'BRANCH'
+                value = 'COVEREDRATIO'
+                minimum = 0.80
+            }
+        }
+    }
+}
+
+check.dependsOn jacocoTestCoverageVerification
 
 jar {
     manifest {
-        attributes 'Main-Class': 'com.factory.flink.FlinkAnomalyDetectionJob'
+        attributes 'Main-Class': 'com.factory.flink.FlinkUnifiedJob'
     }
+    // Bundled Hadoop pushes the fat jar past 65535 entries — needs the zip64 extension.
+    zip64 = true
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     from {
         configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
     }
+    // Avoid signature-file clashes when shading many jars into one fat jar
+    exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA'
 }

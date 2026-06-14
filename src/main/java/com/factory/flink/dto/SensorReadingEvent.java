@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 public class SensorReadingEvent implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private Long equipmentId;
+    private String equipmentId;
     private String sensorId;
     private String sensorType;
     private Double value;

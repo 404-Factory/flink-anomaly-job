@@ -9,11 +9,13 @@ import com.factory.flink.dto.Severity;
 import org.apache.flink.api.common.state.ListState;
 import org.apache.flink.api.common.state.ListStateDescriptor;
 import org.apache.flink.api.common.state.ValueState;
+import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
 import org.apache.flink.util.Collector;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -21,25 +23,49 @@ import java.util.List;
 public class AnomalyEvaluationProcessFunction extends KeyedProcessFunction<String, SensorReadingEvent, SensorViolationEvent> {
     private static final long serialVersionUID = 1L;
 
+    // The 5-minute sliding window the rules are evaluated over.
+    static final long WINDOW_MS = 300_000L;
+    // Recovery dwell = 10% of the window (formula: dwell = 0.1 * W). Long enough to reject
+    // boundary noise, negligible next to the window-length recovery latency already inherent
+    // in the sliding window. Override per-deployment via RECOVERY_DWELL_MS.
+    public static final long DEFAULT_RECOVERY_DWELL_MS = WINDOW_MS / 10;
+
+    // Asymmetric ("downgrade-only") dwell: escalations fire immediately, de-escalations must
+    // hold for this long before they are emitted — this is what damps boundary flapping.
+    private final long recoveryDwellMs;
+
     // Flink list state to store 5 minutes of samples for each key (equipment:sensorType)
     private transient ListState<SensorReadingEvent> sampleState;
-    // Flink value state to remember the last detected severity for state-change deduplication
-    private transient ValueState<Severity> lastSeverityState;
+    // Flink value state to remember the last emitted severity for state-change deduplication.
+    // Package-private so unit tests can inject an in-memory state without a full operator harness.
+    transient ValueState<Severity> lastSeverityState;
+    // Event-time (ms) at which the current de-escalation candidate first appeared; null when
+    // there is no pending downgrade. Drives the dwell gate. Package-private for the same reason.
+    transient ValueState<Long> downgradePendingSinceState;
+
+    public AnomalyEvaluationProcessFunction(long recoveryDwellMs) {
+        this.recoveryDwellMs = recoveryDwellMs;
+    }
 
     @Override
     public void open(Configuration parameters) throws Exception {
-        ListStateDescriptor<SensorReadingEvent> sampleDescriptor = new ListStateDescriptor<>(
+        ListStateDescriptor<SensorReadingEvent> descriptor = new ListStateDescriptor<>(
                 "sensor-samples",
                 TypeInformation.of(SensorReadingEvent.class)
         );
-        sampleState = getRuntimeContext().getListState(sampleDescriptor);
+        sampleState = getRuntimeContext().getListState(descriptor);
 
-        org.apache.flink.api.common.state.ValueStateDescriptor<Severity> severityDescriptor = 
-                new org.apache.flink.api.common.state.ValueStateDescriptor<>(
-                        "last-severity",
-                        TypeInformation.of(Severity.class)
-                );
+        ValueStateDescriptor<Severity> severityDescriptor = new ValueStateDescriptor<>(
+                "last-severity",
+                TypeInformation.of(Severity.class)
+        );
         lastSeverityState = getRuntimeContext().getState(severityDescriptor);
+
+        ValueStateDescriptor<Long> pendingDescriptor = new ValueStateDescriptor<>(
+                "downgrade-pending-since",
+                TypeInformation.of(Long.class)
+        );
+        downgradePendingSinceState = getRuntimeContext().getState(pendingDescriptor);
     }
 
     @Override
@@ -91,7 +117,8 @@ public class AnomalyEvaluationProcessFunction extends KeyedProcessFunction<Strin
         Double recipeMax = currentEvent.getRecipeMax();
 
         RuleResult finalResult = null;
-        int activeSampleCount = fiveMinSamples.size();
+        // The window actually used by the firing rule; drives sampleCount + windowStart.
+        List<SensorReadingEvent> activeWindow = fiveMinSamples;
 
         // 1. Nelson Rule 1 Evaluation (Recipe limit violations in last 5 minutes)
         RuleResult nelson1Result = evaluateNelsonRule1(fiveMinSamples, recipeMin, recipeMax);
@@ -103,7 +130,7 @@ public class AnomalyEvaluationProcessFunction extends KeyedProcessFunction<Strin
                 RuleResult nelson3Result = evaluateNelsonRule3(oneMinSamples, recipeMin, recipeMax);
                 if (nelson3Result.isDetected()) {
                     finalResult = nelson3Result;
-                    activeSampleCount = oneMinSamples.size();
+                    activeWindow = oneMinSamples;
                 }
             }
 
@@ -116,33 +143,73 @@ public class AnomalyEvaluationProcessFunction extends KeyedProcessFunction<Strin
             }
         }
 
-        // 4. State Machine & State Change Deduplication
-        Severity lastSeverity = null;
-        if (lastSeverityState != null) {
-            lastSeverity = lastSeverityState.value();
-        }
+        // 4. State machine with asymmetric ("downgrade-only") dwell.
+        // Collapses the per-second sliding-window re-evaluation into discrete transitions:
+        //   - escalation  (severity rank up, incl. Normal -> anomaly): emit IMMEDIATELY
+        //   - de-escalation (rank down, incl. anomaly -> Normal recovery): emit only after the
+        //     improvement has held continuously for recoveryDwellMs (dampens boundary flapping)
+        Severity lastSeverity = lastSeverityState.value();
         Severity currentSeverity = (finalResult != null) ? finalResult.getSeverity() : null;
+        long nowMs = currentEvent.getMeasuredAtEpochMilli();
 
-        if (currentSeverity != lastSeverity) {
-            if (lastSeverityState != null) {
+        int lastRank = rank(lastSeverity);
+        int currentRank = rank(currentSeverity);
+
+        if (currentRank > lastRank) {
+            // Escalation: never damped — worsening must be reported without delay.
+            downgradePendingSinceState.clear();
+            lastSeverityState.update(currentSeverity);
+            emitTransition(out, currentEvent, finalResult, currentSeverity, activeWindow, fiveMinSamples);
+        } else if (currentRank < lastRank) {
+            // De-escalation candidate: require it to persist for the dwell before committing.
+            Long pendingSince = downgradePendingSinceState.value();
+            if (pendingSince == null) {
+                downgradePendingSinceState.update(nowMs); // start timing; suppress for now
+            } else if (nowMs - pendingSince >= recoveryDwellMs) {
+                downgradePendingSinceState.clear();
                 lastSeverityState.update(currentSeverity);
+                emitTransition(out, currentEvent, finalResult, currentSeverity, activeWindow, fiveMinSamples);
             }
+            // else: still within the dwell window -> suppress
+        } else {
+            // No net change vs the last emitted severity: cancel any in-flight downgrade
+            // (the metric popped back up, so the dip was transient flapping).
+            downgradePendingSinceState.clear();
+        }
+    }
 
-            if (currentSeverity != null) {
-                // Transition to an anomalous state: emit violation event
-                out.collect(SensorViolationEvent.from(currentEvent, finalResult, activeSampleCount));
-            } else {
-                // Transition back to normal (recovery): emit recovery event (severity is null)
-                SensorViolationEvent recoveryEvent = SensorViolationEvent.builder()
-                        .equipmentId(currentEvent.getEquipmentId())
-                        .sensorId(currentEvent.getSensorId())
-                        .sensorType(currentEvent.getSensorType())
-                        .severity(null) // null indicates normal recovery
-                        .detectedAt(java.time.Instant.ofEpochMilli(currentEvent.getMeasuredAtEpochMilli()))
-                        .reason("정상 범위 복구 (물리적 복구)")
-                        .build();
-                out.collect(recoveryEvent);
-            }
+    /** Severity ordering for escalation/de-escalation comparison; Normal (null) is the lowest. */
+    private static int rank(Severity severity) {
+        return (severity == null) ? 0 : severity.ordinal() + 1;
+    }
+
+    private void emitTransition(
+            Collector<SensorViolationEvent> out,
+            SensorReadingEvent currentEvent,
+            RuleResult finalResult,
+            Severity severity,
+            List<SensorReadingEvent> activeWindow,
+            List<SensorReadingEvent> fiveMinSamples
+    ) {
+        Instant windowEnd = Instant.ofEpochMilli(currentEvent.getMeasuredAtEpochMilli());
+        if (severity != null) {
+            // Transition into / between anomalous states: emit the violation.
+            Instant windowStart = Instant.ofEpochMilli(activeWindow.get(0).getMeasuredAtEpochMilli());
+            out.collect(SensorViolationEvent.from(currentEvent, finalResult, activeWindow.size(), windowStart, windowEnd));
+        } else {
+            // Transition back to normal (recovery): emit a recovery event (null severity)
+            // so the backend can close the open session.
+            Instant windowStart = Instant.ofEpochMilli(fiveMinSamples.get(0).getMeasuredAtEpochMilli());
+            out.collect(SensorViolationEvent.builder()
+                    .equipmentId(currentEvent.getEquipmentId())
+                    .sensorType(currentEvent.getSensorType())
+                    .severity(null) // null indicates normal recovery
+                    .detectedAt(windowEnd)
+                    .windowStart(windowStart)
+                    .windowEnd(windowEnd)
+                    .sampleCount(fiveMinSamples.size())
+                    .reason("정상 범위 복구 (물리적 복구)")
+                    .build());
         }
     }
 
