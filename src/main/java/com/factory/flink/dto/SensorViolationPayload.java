@@ -21,6 +21,7 @@ public class SensorViolationPayload implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private Long equipmentId;
+    private String sensorId;
     private String sensorType;
     private String ruleName;
     private String anomalyType;
@@ -40,6 +41,7 @@ public class SensorViolationPayload implements Serializable {
     public static SensorViolationPayload from(SensorViolationEvent event) {
         return SensorViolationPayload.builder()
                 .equipmentId(event.getEquipmentId())
+                .sensorId(event.getSensorId())
                 .sensorType(event.getSensorType())
                 .ruleName(event.getRuleName() != null ? event.getRuleName().name() : null)
                 .anomalyType(event.getAnomalyType() != null ? event.getAnomalyType().name() : null)
