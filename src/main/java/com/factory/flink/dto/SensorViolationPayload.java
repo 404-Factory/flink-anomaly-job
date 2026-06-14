@@ -20,7 +20,7 @@ import lombok.NoArgsConstructor;
 public class SensorViolationPayload implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private String equipmentId;
+    private Long equipmentId;
     private String sensorType;
     private String ruleName;
     private String anomalyType;

@@ -16,7 +16,7 @@ class SensorRecordEmitterTest {
 
     private SensorRecord reading() {
         return SensorRecord.builder()
-                .equipmentId("EQP-1").sensorId("S1").sensorType("TEMP")
+                .equipmentId(1L).sensorId("S1").sensorType("TEMP")
                 .measuredAtEpochMilli(2000L).value(21.5).build();
     }
 
@@ -36,7 +36,7 @@ class SensorRecordEmitterTest {
     void buildsIndexRequestWithDeterministicId() {
         IndexRequest req = new SensorRecordEmitter("sensor-realtime").buildRequest(reading());
         assertThat(req.index()).isEqualTo("sensor-realtime");
-        assertThat(req.id()).isEqualTo("EQP-1_S1_2000");
+        assertThat(req.id()).isEqualTo("1_S1_2000");
         assertThat(req.sourceAsMap()).containsEntry("sensorType", "TEMP");
         assertThat(req.sourceAsMap()).containsEntry("value", 21.5);
     }
@@ -46,6 +46,6 @@ class SensorRecordEmitterTest {
         CapturingIndexer indexer = new CapturingIndexer();
         new SensorRecordEmitter("idx").emit(reading(), null, indexer);
         assertThat(indexer.requests).hasSize(1);
-        assertThat(((IndexRequest) indexer.requests.get(0)).id()).isEqualTo("EQP-1_S1_2000");
+        assertThat(((IndexRequest) indexer.requests.get(0)).id()).isEqualTo("1_S1_2000");
     }
 }

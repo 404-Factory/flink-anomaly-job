@@ -9,18 +9,20 @@ import org.apache.flink.streaming.api.functions.sink.filesystem.BucketAssigner;
 import org.apache.flink.streaming.api.functions.sink.filesystem.bucketassigners.SimpleVersionedStringSerializer;
 
 /**
- * Buckets records into Hive-style partitions {@code dt=YYYY-MM-DD/equipment_id=<id>}
+ * Buckets records into Hive-style partitions {@code dt=YYYY-MM-DD/device_id=<id>}
  * based on the reading's <b>event time</b> ({@code measuredAt}), not arrival time.
+ * Partitioned by {@code deviceId} (a string id), keeping the numeric {@code equipmentId}
+ * purely as data rather than a path token.
  *
  * <p>Two payoffs:
  * <ul>
- *   <li><b>Query cost</b> — engines prune whole partitions on {@code dt}/{@code equipment_id}
+ *   <li><b>Query cost</b> — engines prune whole partitions on {@code dt}/{@code device_id}
  *       predicates, scanning far less S3 data.</li>
  *   <li><b>Late data correctness</b> — a delayed message still lands in the partition
  *       of the day it was measured, so out-of-order arrival never corrupts the layout.</li>
  * </ul>
  *
- * <p>{@code equipmentId} is sanitized to a safe partition token to prevent path
+ * <p>{@code deviceId} is sanitized to a safe partition token to prevent path
  * traversal / injection from untrusted upstream values.
  *
  * <p>The {@code dt} date is derived in <b>UTC</b> — matching the source timestamps
@@ -37,17 +39,17 @@ public class EquipmentDateBucketAssigner implements BucketAssigner<SensorRecord,
 
     @Override
     public String getBucketId(SensorRecord record, Context context) {
-        return bucketId(record.getMeasuredAtEpochMilli(), record.getEquipmentId());
+        return bucketId(record.getMeasuredAtEpochMilli(), record.getDeviceId());
     }
 
     /** Pure, testable bucket-path computation. */
-    static String bucketId(long measuredAtEpochMilli, String equipmentId) {
+    static String bucketId(long measuredAtEpochMilli, String deviceId) {
         String date = DATE_FMT.format(Instant.ofEpochMilli(measuredAtEpochMilli));
-        return "dt=" + date + "/equipment_id=" + sanitize(equipmentId);
+        return "dt=" + date + "/device_id=" + sanitize(deviceId);
     }
 
     /**
-     * Reduces an equipment id to {@code [A-Za-z0-9._-]} so it cannot escape its
+     * Reduces a device id to {@code [A-Za-z0-9._-]} so it cannot escape its
      * partition directory ({@code ../}, absolute paths, etc.).
      */
     static String sanitize(String raw) {

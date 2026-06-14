@@ -12,7 +12,7 @@ class EquipmentDateBucketAssignerTest {
     void buildsHiveStylePartitionFromEventTime() {
         long ts = Instant.parse("2026-06-13T15:04:05Z").toEpochMilli();
         assertThat(EquipmentDateBucketAssigner.bucketId(ts, "EQP-001"))
-                .isEqualTo("dt=2026-06-13/equipment_id=EQP-001");
+                .isEqualTo("dt=2026-06-13/device_id=EQP-001");
     }
 
     @Test
@@ -24,10 +24,10 @@ class EquipmentDateBucketAssignerTest {
     @Test
     void getBucketIdReadsFromRecord() {
         long ts = Instant.parse("2026-01-02T00:00:00Z").toEpochMilli();
-        SensorRecord r = SensorRecord.builder().equipmentId("EQP-9").measuredAtEpochMilli(ts).build();
+        SensorRecord r = SensorRecord.builder().deviceId("D9").measuredAtEpochMilli(ts).build();
         EquipmentDateBucketAssigner assigner = new EquipmentDateBucketAssigner();
         assertThat(assigner.getBucketId(r, null))
-                .isEqualTo("dt=2026-01-02/equipment_id=EQP-9");
+                .isEqualTo("dt=2026-01-02/device_id=D9");
     }
 
     @Test

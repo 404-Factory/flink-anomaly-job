@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 public class SensorViolationEvent implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private String equipmentId;
+    private Long equipmentId;
     private String sensorType;
     private RuleName ruleName;
     private AnomalyType anomalyType;

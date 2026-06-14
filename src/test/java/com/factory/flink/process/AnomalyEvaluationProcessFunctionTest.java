@@ -64,7 +64,7 @@ class AnomalyEvaluationProcessFunctionTest {
 
     private SensorReadingEvent sample(double value, int i, Double min, Double max) {
         return SensorReadingEvent.builder()
-                .equipmentId("EQP-001").sensorId("S1").sensorType("Temperature")
+                .equipmentId(1L).sensorId("S1").sensorType("Temperature")
                 .value(value).recipeMin(min).recipeMax(max)
                 .measuredAtEpochMilli(BASE_TIME + (long) i * 1000)
                 .build();
@@ -94,7 +94,7 @@ class AnomalyEvaluationProcessFunctionTest {
     /** Current ("now") reading at an explicit second offset, to advance the dwell clock. */
     private SensorReadingEvent currentAt(long sec, Double min, Double max) {
         return SensorReadingEvent.builder()
-                .equipmentId("EQP-001").sensorId("S1").sensorType("Temperature")
+                .equipmentId(1L).sensorId("S1").sensorType("Temperature")
                 .value(30.0).recipeMin(min).recipeMax(max)
                 .measuredAtEpochMilli(BASE_TIME + sec * 1000)
                 .build();

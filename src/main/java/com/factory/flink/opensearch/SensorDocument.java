@@ -48,7 +48,7 @@ public final class SensorDocument {
         return m;
     }
 
-    private static String n(String s) {
-        return s == null ? "" : s;
+    private static String n(Object o) {
+        return o == null ? "" : o.toString();
     }
 }

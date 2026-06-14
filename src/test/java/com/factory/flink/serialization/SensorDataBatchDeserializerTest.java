@@ -17,7 +17,7 @@ class SensorDataBatchDeserializerTest {
             {
               "batchId": "B1",
               "deviceId": "D1",
-              "equipmentId": "EQP-1",
+              "equipmentId": 1,
               "createdAt": "2026-06-13T00:00:00Z",
               "intervalSec": 5,
               "measurements": [
@@ -42,7 +42,7 @@ class SensorDataBatchDeserializerTest {
     void parsesValidPayload() throws IOException {
         SensorDataBatchDto dto = new SensorDataBatchDeserializer().deserialize(bytes(VALID_JSON));
         assertThat(dto.getBatchId()).isEqualTo("B1");
-        assertThat(dto.getEquipmentId()).isEqualTo("EQP-1");
+        assertThat(dto.getEquipmentId()).isEqualTo(1L);
         assertThat(dto.getMeasurements()).hasSize(1);
         assertThat(dto.getMeasurements().get(0).getSensors().get(0).getSensorType()).isEqualTo("TEMP");
     }

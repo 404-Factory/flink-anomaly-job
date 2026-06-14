@@ -9,8 +9,8 @@ class SensorRecordTest {
     @Test
     void dedupKeyCombinesBatchEquipmentSequenceSensor() {
         SensorRecord r = SensorRecord.builder()
-                .batchId("B1").equipmentId("EQP-1").sequence(3).sensorId("S7").build();
-        assertThat(r.dedupKey()).isEqualTo("B1|EQP-1|3|S7");
+                .batchId("B1").equipmentId(1L).sequence(3).sensorId("S7").build();
+        assertThat(r.dedupKey()).isEqualTo("B1|1|3|S7");
     }
 
     @Test
@@ -23,9 +23,9 @@ class SensorRecordTest {
     void trueDuplicateSharesTheSameDedupKey() {
         // Retry resends the same payload (same batchId) -> same key -> deduped.
         SensorRecord a = SensorRecord.builder()
-                .batchId("B").equipmentId("E").sequence(1).sensorId("S").value(1.0).build();
+                .batchId("B").equipmentId(1L).sequence(1).sensorId("S").value(1.0).build();
         SensorRecord b = SensorRecord.builder()
-                .batchId("B").equipmentId("E").sequence(1).sensorId("S").value(1.0).build();
+                .batchId("B").equipmentId(1L).sequence(1).sensorId("S").value(1.0).build();
         assertThat(a.dedupKey()).isEqualTo(b.dedupKey());
     }
 
@@ -33,9 +33,9 @@ class SensorRecordTest {
     void differentBatchYieldsDifferentKey() {
         // A later reading is a new batch (new UUID batchId) -> distinct key, never dropped.
         SensorRecord first = SensorRecord.builder()
-                .batchId("B-uuid-1").equipmentId("E").sequence(1).sensorId("S").build();
+                .batchId("B-uuid-1").equipmentId(1L).sequence(1).sensorId("S").build();
         SensorRecord later = SensorRecord.builder()
-                .batchId("B-uuid-2").equipmentId("E").sequence(1).sensorId("S").build();
+                .batchId("B-uuid-2").equipmentId(1L).sequence(1).sensorId("S").build();
         assertThat(first.dedupKey()).isNotEqualTo(later.dedupKey());
     }
 }

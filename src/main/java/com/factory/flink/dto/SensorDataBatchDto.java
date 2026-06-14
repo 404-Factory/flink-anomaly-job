@@ -21,7 +21,7 @@ public class SensorDataBatchDto implements Serializable {
 
     private String batchId;
     private String deviceId;
-    private String equipmentId;
+    private Long equipmentId;
     private List<MeasurementDto> measurements;
     private Instant createdAt;
     private Integer intervalSec;

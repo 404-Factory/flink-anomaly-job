@@ -35,7 +35,7 @@ class SensorRecordFlatMapFunctionTest {
     void explodesEveryMeasurementSensorPair() {
         Instant t = Instant.parse("2026-06-13T00:00:00Z");
         SensorDataBatchDto batch = SensorDataBatchDto.builder()
-                .batchId("B1").deviceId("D1").equipmentId("EQP-1")
+                .batchId("B1").deviceId("D1").equipmentId(1L)
                 .createdAt(t).intervalSec(5)
                 .measurements(Arrays.asList(
                         MeasurementDto.builder().sequence(0).measuredAt(t).status("OK")
@@ -50,7 +50,7 @@ class SensorRecordFlatMapFunctionTest {
         assertThat(out.items).hasSize(3);
         SensorRecord first = out.items.get(0);
         assertThat(first.getBatchId()).isEqualTo("B1");
-        assertThat(first.getEquipmentId()).isEqualTo("EQP-1");
+        assertThat(first.getEquipmentId()).isEqualTo(1L);
         assertThat(first.getSensorId()).isEqualTo("S1");
         assertThat(first.getMeasuredAtEpochMilli()).isEqualTo(t.toEpochMilli());
         assertThat(first.getCreatedAtEpochMilli()).isEqualTo(t.toEpochMilli());
@@ -78,7 +78,7 @@ class SensorRecordFlatMapFunctionTest {
         sensors.add(sensor("S1", 1.0));
         sensors.add(null);
         SensorDataBatchDto batch = SensorDataBatchDto.builder()
-                .batchId("B").equipmentId("E").createdAt(t)
+                .batchId("B").equipmentId(1L).createdAt(t)
                 .measurements(Arrays.asList(
                         null,
                         MeasurementDto.builder().sequence(0).measuredAt(t).sensors(sensors).build()))
@@ -93,7 +93,7 @@ class SensorRecordFlatMapFunctionTest {
     void measurementWithNullSensorsListIsSkipped() {
         Instant t = Instant.parse("2026-06-13T00:00:00Z");
         SensorDataBatchDto batch = SensorDataBatchDto.builder()
-                .batchId("B").equipmentId("E").createdAt(t)
+                .batchId("B").equipmentId(1L).createdAt(t)
                 .measurements(Collections.singletonList(
                         MeasurementDto.builder().sequence(0).measuredAt(t).sensors(null).build()))
                 .build();
@@ -106,7 +106,7 @@ class SensorRecordFlatMapFunctionTest {
     void fallsBackToCreatedAtWhenMeasuredAtMissing() {
         Instant created = Instant.parse("2026-06-13T01:02:03Z");
         SensorDataBatchDto batch = SensorDataBatchDto.builder()
-                .batchId("B").equipmentId("E").createdAt(created)
+                .batchId("B").equipmentId(1L).createdAt(created)
                 .measurements(Collections.singletonList(
                         MeasurementDto.builder().sequence(0).measuredAt(null)
                                 .sensors(Collections.singletonList(sensor("S1", 1.0))).build()))
@@ -121,7 +121,7 @@ class SensorRecordFlatMapFunctionTest {
     @Test
     void dropsMeasurementWhenNoTimestampAvailable() {
         SensorDataBatchDto batch = SensorDataBatchDto.builder()
-                .batchId("B").equipmentId("E").createdAt(null)
+                .batchId("B").equipmentId(1L).createdAt(null)
                 .measurements(Collections.singletonList(
                         MeasurementDto.builder().sequence(0).measuredAt(null)
                                 .sensors(Collections.singletonList(sensor("S1", 1.0))).build()))

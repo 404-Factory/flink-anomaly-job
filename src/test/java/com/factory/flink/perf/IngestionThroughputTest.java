@@ -47,7 +47,7 @@ class IngestionThroughputTest {
             ms.add(MeasurementDto.builder().sequence(m).measuredAt(t.plusSeconds(m)).status("OK").sensors(ss).build());
         }
         return SensorDataBatchDto.builder()
-                .batchId("B").deviceId("D").equipmentId("EQP-1").createdAt(t).intervalSec(1).measurements(ms).build();
+                .batchId("B").deviceId("D").equipmentId(1L).createdAt(t).intervalSec(1).measurements(ms).build();
     }
 
     @Test

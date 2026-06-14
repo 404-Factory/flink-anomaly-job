@@ -27,7 +27,7 @@ public class SensorRecord implements Serializable {
     // ---- batch-level (denormalized onto every row) ----
     private String batchId;
     private String deviceId;
-    private String equipmentId;
+    private Long equipmentId;
     private long createdAtEpochMilli;
     private Integer intervalSec;
 
@@ -59,7 +59,7 @@ public class SensorRecord implements Serializable {
         return n(batchId) + '|' + n(equipmentId) + '|' + sequence + '|' + n(sensorId);
     }
 
-    private static String n(String s) {
-        return s == null ? "" : s;
+    private static String n(Object o) {
+        return o == null ? "" : o.toString();
     }
 }

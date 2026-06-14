@@ -24,7 +24,7 @@ class SensorRecordAvroConverterTest {
     @Test
     void mapsEveryFieldOntoGenericRecord() {
         SensorRecord r = SensorRecord.builder()
-                .batchId("B").deviceId("D").equipmentId("E")
+                .batchId("B").deviceId("D").equipmentId(1L)
                 .createdAtEpochMilli(1000L).intervalSec(5)
                 .sequence(2).measuredAtEpochMilli(2000L).measurementStatus("OK")
                 .sensorId("S1").sensorType("TEMP").value(21.5)
@@ -35,7 +35,7 @@ class SensorRecordAvroConverterTest {
 
         assertThat(avro.get("batchId")).isEqualTo("B");
         assertThat(avro.get("deviceId")).isEqualTo("D");
-        assertThat(avro.get("equipmentId")).isEqualTo("E");
+        assertThat(avro.get("equipmentId")).isEqualTo(1L);
         assertThat(avro.get("createdAt")).isEqualTo(1000L);
         assertThat(avro.get("intervalSec")).isEqualTo(5);
         assertThat(avro.get("sequence")).isEqualTo(2);

@@ -10,7 +10,7 @@ class SensorDocumentTest {
 
     private SensorRecord full() {
         return SensorRecord.builder()
-                .batchId("B1").deviceId("D1").equipmentId("EQP-1")
+                .batchId("B1").deviceId("D1").equipmentId(1L)
                 .createdAtEpochMilli(1000L).intervalSec(5)
                 .sequence(2).measuredAtEpochMilli(2000L)
                 .measurementStatus("OK").sensorId("S1").sensorType("TEMP")
@@ -20,7 +20,7 @@ class SensorDocumentTest {
 
     @Test
     void idIsDeterministicEquipmentSensorMeasuredAt() {
-        assertThat(SensorDocument.id(full())).isEqualTo("EQP-1_S1_2000");
+        assertThat(SensorDocument.id(full())).isEqualTo("1_S1_2000");
     }
 
     @Test
@@ -39,7 +39,7 @@ class SensorDocumentTest {
         Map<String, Object> s = SensorDocument.source(full());
         assertThat(s.get("batchId")).isEqualTo("B1");
         assertThat(s.get("deviceId")).isEqualTo("D1");
-        assertThat(s.get("equipmentId")).isEqualTo("EQP-1");
+        assertThat(s.get("equipmentId")).isEqualTo(1L);
         assertThat(s.get("createdAt")).isEqualTo(1000L);
         assertThat(s.get("intervalSec")).isEqualTo(5);
         assertThat(s.get("sequence")).isEqualTo(2);
@@ -55,7 +55,7 @@ class SensorDocumentTest {
 
     @Test
     void sourceKeepsNullableFieldsAsNull() {
-        SensorRecord r = SensorRecord.builder().equipmentId("E").measuredAtEpochMilli(1L).build();
+        SensorRecord r = SensorRecord.builder().equipmentId(1L).measuredAtEpochMilli(1L).build();
         Map<String, Object> s = SensorDocument.source(r);
         assertThat(s).containsKey("value").containsKey("batchId");
         assertThat(s.get("value")).isNull();

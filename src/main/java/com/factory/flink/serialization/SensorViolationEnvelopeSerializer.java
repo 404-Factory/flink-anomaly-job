@@ -36,7 +36,7 @@ public class SensorViolationEnvelopeSerializer implements SerializationSchema<Se
                     .eventType("SensorViolation")
                     .envelopeType("domain")
                     .aggregateType("Equipment")
-                    .aggregateId(element.getEquipmentId())
+                    .aggregateId(element.getEquipmentId() == null ? null : String.valueOf(element.getEquipmentId()))
                     .timestamp(Instant.now())
                     .payload(SensorViolationPayload.from(element))
                     .build();

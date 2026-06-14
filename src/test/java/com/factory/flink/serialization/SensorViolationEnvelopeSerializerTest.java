@@ -19,7 +19,7 @@ class SensorViolationEnvelopeSerializerTest {
 
     private SensorViolationEvent sampleEvent() {
         return SensorViolationEvent.builder()
-                .equipmentId("EQP-001")
+                .equipmentId(1L)
                 .sensorType("TEMP")
                 .ruleName(RuleName.NELSON_RULE_1)
                 .anomalyType(AnomalyType.HIGH)
@@ -44,13 +44,13 @@ class SensorViolationEnvelopeSerializerTest {
         assertThat(json.get("eventType").asText()).isEqualTo("SensorViolation");
         assertThat(json.get("envelopeType").asText()).isEqualTo("domain");
         assertThat(json.get("aggregateType").asText()).isEqualTo("Equipment");
-        assertThat(json.get("aggregateId").asText()).isEqualTo("EQP-001");
+        assertThat(json.get("aggregateId").asText()).isEqualTo("1");
         assertThat(json.has("timestamp")).isTrue();
 
         // violation lives under the payload key (this is what the consumer extracts)
         assertThat(json.has("payload")).isTrue();
         JsonNode payload = json.get("payload");
-        assertThat(payload.get("equipmentId").asText()).isEqualTo("EQP-001");
+        assertThat(payload.get("equipmentId").asLong()).isEqualTo(1L);
         assertThat(payload.get("severity").asText()).isEqualTo("CRITICAL");
         assertThat(payload.get("ruleName").asText()).isEqualTo("NELSON_RULE_1");
         assertThat(payload.get("sampleCount").asInt()).isEqualTo(240);
@@ -67,13 +67,13 @@ class SensorViolationEnvelopeSerializerTest {
         // Same logical event -> same key, so the consumer can drop redeliveries.
         assertThat(a.get("idempotencyKey").asText()).isEqualTo(b.get("idempotencyKey").asText());
         long ts = Instant.parse("2026-06-14T00:15:26Z").toEpochMilli();
-        assertThat(a.get("idempotencyKey").asText()).isEqualTo("EQP-001:TEMP:CRITICAL:" + ts);
+        assertThat(a.get("idempotencyKey").asText()).isEqualTo("1:TEMP:CRITICAL:" + ts);
     }
 
     @Test
     void recoveryEventSerializesWithNullSeverityAndRecoveryKey() throws Exception {
         SensorViolationEvent recovery = SensorViolationEvent.builder()
-                .equipmentId("EQP-001").sensorType("TEMP")
+                .equipmentId(1L).sensorType("TEMP")
                 .severity(null) // recovery
                 .detectedAt(Instant.parse("2026-06-14T00:20:00Z"))
                 .reason("정상 범위 복구 (물리적 복구)")
@@ -82,6 +82,6 @@ class SensorViolationEnvelopeSerializerTest {
         JsonNode json = mapper.readTree(serializer.serialize(recovery));
         assertThat(json.get("payload").get("severity").isNull()).isTrue();
         long ts = Instant.parse("2026-06-14T00:20:00Z").toEpochMilli();
-        assertThat(json.get("idempotencyKey").asText()).isEqualTo("EQP-001:TEMP:RECOVERY:" + ts);
+        assertThat(json.get("idempotencyKey").asText()).isEqualTo("1:TEMP:RECOVERY:" + ts);
     }
 }

@@ -29,7 +29,7 @@ class DeduplicationProcessFunctionTest {
 
     private static SensorRecord reading(String batch, int seq, String sensor) {
         return SensorRecord.builder()
-                .batchId(batch).equipmentId("E").sequence(seq).sensorId(sensor).value(1.0).build();
+                .batchId(batch).equipmentId(1L).sequence(seq).sensorId(sensor).value(1.0).build();
     }
 
     @AfterEach

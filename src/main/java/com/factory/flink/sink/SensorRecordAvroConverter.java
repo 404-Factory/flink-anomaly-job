@@ -25,7 +25,7 @@ public final class SensorRecordAvroConverter {
               "fields": [
                 {"name": "batchId",           "type": ["null", "string"], "default": null},
                 {"name": "deviceId",          "type": ["null", "string"], "default": null},
-                {"name": "equipmentId",       "type": ["null", "string"], "default": null},
+                {"name": "equipmentId",       "type": ["null", "long"],   "default": null},
                 {"name": "createdAt",         "type": {"type": "long", "logicalType": "timestamp-millis"}},
                 {"name": "intervalSec",       "type": ["null", "int"],    "default": null},
                 {"name": "sequence",          "type": ["null", "int"],    "default": null},
