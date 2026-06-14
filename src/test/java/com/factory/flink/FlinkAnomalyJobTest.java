@@ -9,14 +9,14 @@ import org.apache.flink.streaming.api.environment.CheckpointConfig;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.junit.jupiter.api.Test;
 
-class FlinkUnifiedJobTest {
+class FlinkAnomalyJobTest {
 
     @Test
     void configuresExactlyOnceCheckpointing() {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironment(1);
         JobConfig cfg = JobConfig.from(Collections.singletonMap("CHECKPOINT_INTERVAL_MS", "20000"));
 
-        FlinkUnifiedJob.configureCheckpointing(env, cfg);
+        FlinkAnomalyJob.configureCheckpointing(env, cfg);
 
         CheckpointConfig cp = env.getCheckpointConfig();
         assertThat(cp.isCheckpointingEnabled()).isTrue();

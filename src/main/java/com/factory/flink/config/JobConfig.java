@@ -84,7 +84,7 @@ public final class JobConfig implements Serializable {
         return new JobConfig(
                 str(env, "KAFKA_BOOTSTRAP_SERVERS", "localhost:9092"),
                 str(env, "KAFKA_SOURCE_TOPIC", "fab-semiconductor-001"),
-                str(env, "KAFKA_GROUP_ID", "flink-unified-ingestion"),
+                str(env, "KAFKA_GROUP_ID", "flink-anomaly-ingestion"),
                 bool(env, "START_FROM_EARLIEST", true),
                 longVal(env, "CHECKPOINT_INTERVAL_MS", 60_000L),
                 str(env, "S3_OUTPUT_PATH", "s3a://sensor-data-lake/sensor"),

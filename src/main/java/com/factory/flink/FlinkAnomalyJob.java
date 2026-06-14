@@ -41,7 +41,7 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
  * defensive per-branch handling and slot-group resource isolation; if hard isolation
  * is later required, the branches split cleanly into separate Application-mode jobs.
  */
-public class FlinkUnifiedJob {
+public class FlinkAnomalyJob {
 
     public static void main(String[] args) throws Exception {
         JobConfig cfg = JobConfig.fromEnv();
@@ -96,7 +96,7 @@ public class FlinkUnifiedJob {
 
         violations.sinkTo(buildViolationsSink(cfg)).name("KafkaViolationSink").slotSharingGroup("anom");
 
-        env.execute("Flink Unified Sensor Job");
+        env.execute("Flink Anomaly Detection Job");
     }
 
     private static KafkaSink<SensorViolationEvent> buildViolationsSink(JobConfig cfg) {
@@ -124,6 +124,6 @@ public class FlinkUnifiedJob {
                 CheckpointConfig.ExternalizedCheckpointCleanup.RETAIN_ON_CANCELLATION);
     }
 
-    private FlinkUnifiedJob() {
+    private FlinkAnomalyJob() {
     }
 }

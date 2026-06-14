@@ -67,6 +67,6 @@ spec:
               value: "true"
   job:
     jarURI: local:///opt/flink/usrlib/flink-anomaly-job.jar
-    entryClass: com.factory.flink.FlinkUnifiedJob
+    entryClass: com.factory.flink.FlinkAnomalyJob
     parallelism: 1
     upgradeMode: stateless

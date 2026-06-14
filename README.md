@@ -91,7 +91,7 @@ gradle test jacocoTestCoverageVerification jar      # 테스트 + 80% line/branc
 - **기능 테스트**: flatten, dedup(harness), Avro/Parquet 변환, 버킷, OpenSearch `_id`/문서/emitter, 이상감지 룰, violation 직렬화
 - **성능 테스트**: `perf/IngestionThroughputTest` — flatten+문서매핑 처리량 하한 검증
 - **커버리지**: jacoco **line·branch ≥80%** 게이트. 클러스터 없이는 검증 불가한 결선부
-  (`FlinkUnifiedJob`, `SensorRecordParquetSink`, `SensorRecordOpensearchSink`)는 분모에서 제외.
+  (`FlinkAnomalyJob`, `SensorRecordParquetSink`, `SensorRecordOpensearchSink`)는 분모에서 제외.
 - Lombok 생성 코드는 `lombok.config`의 `@Generated`로 제외.
 
 ---

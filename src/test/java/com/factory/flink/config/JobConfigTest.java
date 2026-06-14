@@ -15,7 +15,7 @@ class JobConfigTest {
         JobConfig c = JobConfig.from(Collections.emptyMap());
         assertThat(c.getBootstrapServers()).isEqualTo("localhost:9092");
         assertThat(c.getSourceTopic()).isEqualTo("fab-semiconductor-001");
-        assertThat(c.getGroupId()).isEqualTo("flink-unified-ingestion");
+        assertThat(c.getGroupId()).isEqualTo("flink-anomaly-ingestion");
         assertThat(c.getS3OutputPath()).isEqualTo("s3a://sensor-data-lake/sensor");
         assertThat(c.isStartFromEarliest()).isTrue();
         assertThat(c.getCheckpointIntervalMs()).isEqualTo(60_000L);
