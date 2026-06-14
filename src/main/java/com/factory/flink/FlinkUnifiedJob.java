@@ -11,7 +11,7 @@ import com.factory.flink.process.DeduplicationProcessFunction;
 import com.factory.flink.process.SensorRecordFlatMapFunction;
 import com.factory.flink.process.SensorRecordToReadingEvent;
 import com.factory.flink.serialization.SensorDataBatchDeserializer;
-import com.factory.flink.serialization.SensorViolationSerializer;
+import com.factory.flink.serialization.SensorViolationEnvelopeSerializer;
 import com.factory.flink.sink.SensorRecordParquetSink;
 import java.time.Duration;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
@@ -104,7 +104,7 @@ public class FlinkUnifiedJob {
                 .setBootstrapServers(cfg.getBootstrapServers())
                 .setRecordSerializer(KafkaRecordSerializationSchema.builder()
                         .setTopic(cfg.getViolationsTopic())
-                        .setValueSerializationSchema(new SensorViolationSerializer())
+                        .setValueSerializationSchema(new SensorViolationEnvelopeSerializer())
                         .build())
                 .build();
     }
