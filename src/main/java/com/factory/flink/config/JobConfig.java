@@ -99,9 +99,8 @@ public final class JobConfig implements Serializable {
                 str(env, "OPENSEARCH_PASSWORD", ""),
                 intVal(env, "OPENSEARCH_BULK_FLUSH_MAX_ACTIONS", 1000),
                 str(env, "KAFKA_VIOLATIONS_TOPIC", "sensor-violations"),
-                // Recovery dwell = 10% of the 5-min anomaly window (see AnomalyEvaluationProcessFunction).
-                longVal(env, "RECOVERY_DWELL_MS",
-                        com.factory.flink.process.AnomalyEvaluationProcessFunction.DEFAULT_RECOVERY_DWELL_MS),
+                // Recovery dwell = 10% of the 5-min anomaly window (30 seconds)
+                longVal(env, "RECOVERY_DWELL_MS", 30_000L),
                 str(env, "CHECKPOINT_DIR", ""));
     }
 

@@ -6,14 +6,12 @@ import com.factory.flink.dto.SensorReadingEvent;
 import com.factory.flink.dto.SensorRecord;
 import com.factory.flink.dto.SensorViolationEvent;
 import com.factory.flink.opensearch.SensorRecordOpensearchSink;
-import com.factory.flink.process.AnomalyEvaluationProcessFunction;
 import com.factory.flink.process.DeduplicationProcessFunction;
-import com.factory.flink.process.FiveMinWindowFunction;
-import com.factory.flink.process.OneMinWindowFunction;
+import com.factory.flink.process.FiveMinProcessFunction;
+import com.factory.flink.process.OneMinProcessFunction;
 import com.factory.flink.process.SensorRecordFlatMapFunction;
 import com.factory.flink.process.SensorRecordToReadingEvent;
 import com.factory.flink.process.TransitionProcessFunction;
-import com.factory.flink.process.trigger.BatchCountTrigger;
 import com.factory.flink.serialization.SensorDataBatchDeserializer;
 import com.factory.flink.serialization.SensorViolationEnvelopeSerializer;
 import com.factory.flink.sink.SensorRecordParquetSink;
@@ -101,25 +99,22 @@ public class FlinkAnomalyJob {
             .keyBy(e -> e.getEquipmentId() + ":" + e.getSensorId());
 
         DataStream<SensorViolationEvent> fiveMinViolations = keyed
-            .window(SlidingEventTimeWindows.of(Time.minutes(5), Time.seconds(1)))
-            .trigger(new BatchCountTrigger())
-            .process(new FiveMinWindowFunction())
-            .name("FiveMinWindow")
+            .process(new FiveMinProcessFunction())
+            .name("FiveMinProcess")
             .slotSharingGroup("anom");
 
         DataStream<SensorViolationEvent> oneMinViolations = keyed
-            .window(SlidingEventTimeWindows.of(Time.minutes(1), Time.seconds(1)))
-            .process(new OneMinWindowFunction())
-            .name("OneMinWindow")
+            .process(new OneMinProcessFunction())
+            .name("OneMinProcess")
             .slotSharingGroup("anom");
 
         DataStream<SensorViolationEvent> union = fiveMinViolations.union(oneMinViolations);
 
         DataStream<SensorViolationEvent> violations = union
-            .keyBy(e -> e.getEquipmentId() + ":" + e.getSensorId()) // 이거까지 필요한지는 잘 모르겠네.. 검토 필요
+            .keyBy(e -> e.getEquipmentId() + ":" + e.getSensorId())
             .process(new TransitionProcessFunction())
             .name("TransitionProcessFunction")
-            .slotSharingGroup("sink"); // "anom" 이어야 하나?
+            .slotSharingGroup("sink");
 
         violations.sinkTo(buildViolationsSink(cfg)).name("KafkaViolationSink")
             .slotSharingGroup("sink");
