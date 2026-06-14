@@ -1,4 +1,4 @@
-# flink-unified-job
+# flink-anomaly-job
 
 Kafka(`fab-semiconductor-001`)의 센서 데이터를 **하나의 Flink 잡**에서 받아, 소스 1번 읽고
 **flatten을 한 번만** 계산한 뒤 **세 갈래(task 분기)** 로 처리한다. 각 분기는 slot sharing group으로
@@ -113,5 +113,5 @@ gradle test jacocoTestCoverageVerification jar      # 테스트 + 80% line/branc
 
 ## 배포 (Flink Kubernetes Operator, Application 모드)
 
-`k8s/app/flink-unified-job-flinkdeployment.yml` — 한 FlinkDeployment(=한 잡). TaskManager 병렬도/슬롯을
+`k8s/app/flink-anomaly-job-flinkdeployment.yml` — 한 FlinkDeployment(=한 잡). TaskManager 병렬도/슬롯을
 늘리면 세 분기가 서로 다른 TM pod에 분산된다. 자세한 로컬 실행은 루트 `local-infra/` 참고.

@@ -1,6 +1,6 @@
 # 로컬/minikube 반복용 — gradle 재빌드 없이 이미 만든 fat jar를 올린다.
-# 사전: gradle -p flink-unified-job jar
+# 사전: gradle -p flink-anomaly-job jar
 FROM flink:1.18.1-java17
 RUN mkdir -p /opt/flink/plugins/s3-fs-hadoop && \
     cp /opt/flink/opt/flink-s3-fs-hadoop-1.18.1.jar /opt/flink/plugins/s3-fs-hadoop/
-COPY build/libs/flink-unified-job-1.0.0.jar /opt/flink/usrlib/flink-unified-job.jar
+COPY build/libs/flink-anomaly-job-1.0.0.jar /opt/flink/usrlib/flink-anomaly-job.jar

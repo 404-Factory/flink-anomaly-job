@@ -13,4 +13,4 @@ RUN mkdir -p /opt/flink/plugins/s3-fs-hadoop && \
     cp /opt/flink/opt/flink-s3-fs-hadoop-1.18.1.jar /opt/flink/plugins/s3-fs-hadoop/
 
 # Flink Kubernetes Operator (application mode) runs this jar via jarURI.
-COPY --from=build /app/build/libs/*.jar flink-unified-job.jar
+COPY --from=build /app/build/libs/*.jar flink-anomaly-job.jar
