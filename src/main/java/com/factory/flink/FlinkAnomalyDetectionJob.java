@@ -6,7 +6,7 @@ import com.factory.flink.dto.SensorViolationEvent;
 import com.factory.flink.process.AnomalyEvaluationProcessFunction;
 import com.factory.flink.process.SensorDataBatchFlatMapFunction;
 import com.factory.flink.serialization.SensorDataBatchDeserializer;
-import com.factory.flink.serialization.SensorViolationSerializer;
+import com.factory.flink.serialization.SensorViolationEnvelopeSerializer;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.connector.file.sink.FileSink;
@@ -32,7 +32,18 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class FlinkAnomalyDetectionJob {
+
+    private static String env(String key, String defaultValue) {
+        String v = System.getenv(key);
+        return (v != null && !v.isBlank()) ? v : defaultValue;
+    }
+
     public static void main(String[] args) throws Exception {
+        final String bootstrapServers = env("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092");
+        final String sourceTopic      = env("KAFKA_SOURCE_TOPIC",      "fab-semiconductor-001");
+        final String sinkTopic        = env("KAFKA_SINK_TOPIC",        "sensor-violations");
+        final String groupId          = env("KAFKA_GROUP_ID",          "flink-anomaly-group");
+
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
         // Checkpoint Configuration (RocksDB State Backend & S3 Checkpoint)
@@ -40,13 +51,10 @@ public class FlinkAnomalyDetectionJob {
         env.enableCheckpointing(60000); // Checkpoint every 60 seconds
 
         // 1. Configure Kafka Source to read SensorDataBatchDto JSON messages
-        String kafkaBootstrap = System.getenv("KAFKA_BOOTSTRAP_SERVERS") != null 
-                ? System.getenv("KAFKA_BOOTSTRAP_SERVERS") : "localhost:9092";
-
         KafkaSource<SensorDataBatchDto> kafkaSource = KafkaSource.<SensorDataBatchDto>builder()
-                .setBootstrapServers(kafkaBootstrap)
-                .setTopics("fab-semiconductor-001")
-                .setGroupId("flink-anomaly-group")
+                .setBootstrapServers(bootstrapServers)
+                .setTopics(sourceTopic)
+                .setGroupId(groupId)
                 .setStartingOffsets(OffsetsInitializer.latest())
                 .setValueOnlyDeserializer(new SensorDataBatchDeserializer())
                 .build();
@@ -58,7 +66,6 @@ public class FlinkAnomalyDetectionJob {
                 "KafkaBatchSource"
         );
 
-        // 3. Flatten the 1-minute batch of measurements into individual 1-second sensor reading events
         DataStream<SensorReadingEvent> flattenedStream = batchStream
                 .flatMap(new SensorDataBatchFlatMapFunction())
                 .name("SensorBatchFlattener");
@@ -156,18 +163,17 @@ public class FlinkAnomalyDetectionJob {
 
         // 8. Configure Kafka Sink to emit violation events to 'sensor-violations' topic
         KafkaSink<SensorViolationEvent> kafkaSink = KafkaSink.<SensorViolationEvent>builder()
-                .setBootstrapServers(kafkaBootstrap)
+                .setBootstrapServers(bootstrapServers)
                 .setRecordSerializer(
                         KafkaRecordSerializationSchema.builder()
-                                .setTopic("sensor-violations")
-                                .setValueSerializationSchema(new SensorViolationSerializer())
+                                .setTopic(sinkTopic)
+                                .setValueSerializationSchema(new SensorViolationEnvelopeSerializer())
                                 .build()
                 )
                 .build();
 
         violationStream.sinkTo(kafkaSink).name("KafkaViolationSink");
 
-        // Execute Flink Job
         env.execute("Flink Real-time Anomaly Detection Job");
     }
 }
