@@ -22,13 +22,10 @@ jobs:
       use-ecr: true
       aws-region: ap-northeast-2
       ecr-registry: ${{ vars.ECR_REGISTRY }}
-      java-version: "17"
-      pre-build-command: "./gradlew jar --no-daemon"
       push-on-ref: refs/heads/dev
     secrets:
       aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
       aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      gpr-token: ${{ secrets.GPR_TOKEN }}
 
   deploy:
     needs: build

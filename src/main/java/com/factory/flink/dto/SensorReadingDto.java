@@ -6,6 +6,10 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * A single sensor reading inside a {@link MeasurementDto}.
+ * Mirrors the JSON produced on the {@code fab-semiconductor-001} topic.
+ */
 @Data
 @Builder
 @NoArgsConstructor
