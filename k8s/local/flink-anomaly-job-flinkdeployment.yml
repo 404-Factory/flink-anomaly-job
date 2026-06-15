@@ -1,0 +1,72 @@
+# 로컬 minikube 전용 FlinkDeployment. (EKS/CI용은 k8s/app/ 참고)
+# CI(reusable-deploy)는 k8s/app/ 만 배포하므로, 이 파일은 그 대상에서 제외된다.
+#
+# 사전: gradle -p flink-anomaly-job jar
+#       cd flink-anomaly-job && minikube image build -t flink-anomaly-job:local -f Dockerfile.local .
+# 배포: kubectl apply -f flink-anomaly-job/k8s/local/flink-anomaly-job-flinkdeployment.yml
+#
+# 런타임 의존성(로컬): local-infra/ 의 Kafka, MinIO, OpenSearch.
+apiVersion: flink.apache.org/v1beta1
+kind: FlinkDeployment
+metadata:
+  name: flink-anomaly-job
+  namespace: default
+spec:
+  image: flink-anomaly-job:local
+  imagePullPolicy: Never           # 로컬 빌드 이미지 사용(레지스트리 pull 안 함)
+  flinkVersion: v1_18
+  serviceAccount: flink
+  flinkConfiguration:
+    taskmanager.numberOfTaskSlots: "4"
+    env.java.opts.all: >-
+      --add-opens=java.base/java.util=ALL-UNNAMED
+      --add-opens=java.base/java.lang=ALL-UNNAMED
+      --add-opens=java.base/java.lang.reflect=ALL-UNNAMED
+      --add-opens=java.base/java.io=ALL-UNNAMED
+      --add-opens=java.base/java.nio=ALL-UNNAMED
+      --add-opens=java.base/java.time=ALL-UNNAMED
+    state.checkpoint-storage: jobmanager
+    execution.checkpointing.interval: "30s"
+    # s3a → MinIO (로컬 전용). EKS는 실제 S3 + IRSA.
+    s3.endpoint: "http://minio.minio.svc.cluster.local:9000"
+    s3.path.style.access: "true"
+    s3.access-key: "minioadmin"
+    s3.secret-key: "minioadmin"
+  jobManager:
+    resource:
+      memory: "1024m"
+      cpu: 0.5
+  taskManager:
+    resource:
+      memory: "2048m"
+      cpu: 1
+  podTemplate:
+    spec:
+      containers:
+        - name: flink-main-container
+          env:
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: "kafka.kafka.svc.cluster.local:9092"
+            - name: KAFKA_SOURCE_TOPIC
+              value: "fab-semiconductor-001"
+            - name: KAFKA_GROUP_ID
+              value: "flink-unified-ingestion"
+            - name: S3_OUTPUT_PATH
+              value: "s3a://sensor-data-lake/sensor"
+            - name: OPENSEARCH_HOST
+              value: "opensearch.opensearch.svc.cluster.local"
+            - name: OPENSEARCH_PORT
+              value: "9200"
+            - name: OPENSEARCH_SCHEME
+              value: "http"
+            - name: OPENSEARCH_INDEX
+              value: "sensor-realtime"
+            - name: KAFKA_VIOLATIONS_TOPIC
+              value: "sensor-violations"
+            - name: START_FROM_EARLIEST
+              value: "true"
+  job:
+    jarURI: local:///opt/flink/usrlib/flink-anomaly-job.jar
+    entryClass: com.factory.flink.FlinkAnomalyJob
+    parallelism: 1
+    upgradeMode: stateless

@@ -14,7 +14,8 @@ import lombok.NoArgsConstructor;
 public class SensorViolationEvent implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private String equipmentId;
+    private Long equipmentId;
+    private String sensorId;
     private String sensorType;
     private RuleName ruleName;
     private AnomalyType anomalyType;
@@ -26,12 +27,17 @@ public class SensorViolationEvent implements Serializable {
     private Double min;
     private Double max;
     private Instant detectedAt;
+    // Start/end of the sample window the rule was evaluated over (windowEnd == detection time).
+    private Instant windowStart;
+    private Instant windowEnd;
     private Integer sampleCount;
     private String reason;
 
-    public static SensorViolationEvent from(SensorReadingEvent reading, RuleResult result, int sampleCount) {
+    public static SensorViolationEvent from(SensorReadingEvent reading, RuleResult result, int sampleCount,
+                                            Instant windowStart, Instant windowEnd) {
         return SensorViolationEvent.builder()
                 .equipmentId(reading.getEquipmentId())
+                .sensorId(reading.getSensorId())
                 .sensorType(reading.getSensorType())
                 .ruleName(result.getRuleName())
                 .anomalyType(result.getAnomalyType())
@@ -43,6 +49,8 @@ public class SensorViolationEvent implements Serializable {
                 .min(reading.getRecipeMin())
                 .max(reading.getRecipeMax())
                 .detectedAt(Instant.ofEpochMilli(reading.getMeasuredAtEpochMilli()))
+                .windowStart(windowStart)
+                .windowEnd(windowEnd)
                 .sampleCount(sampleCount)
                 .reason(result.getReason())
                 .build();
