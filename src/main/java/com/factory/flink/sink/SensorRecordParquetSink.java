@@ -38,11 +38,28 @@ public final class SensorRecordParquetSink {
                 .build();
 
         return FileSink
-                .forBulkFormat(new Path(outputPath), new SensorRecordBulkWriterFactory(parquetFactory))
+                .forBulkFormat(new Path(normalizeS3Path(outputPath)),
+                        new SensorRecordBulkWriterFactory(parquetFactory))
                 .withBucketAssigner(new DeviceDateBucketAssigner())
                 .withRollingPolicy(OnCheckpointRollingPolicy.build())
                 .withOutputFileConfig(fileConfig)
                 .build();
+    }
+
+    /**
+     * Ensures the sink base has a filesystem scheme. The S3_BUCKET_NAME secret is a
+     * bare bucket name (e.g. {@code sensor-data-lake}) shared with the Python consumer,
+     * which feeds it to boto3 as-is — but Flink's {@link Path} needs an explicit scheme
+     * or it resolves against the local FS. Prepend {@code s3a://} so the job writes to
+     * the same bucket the consumer does. Values that already carry a scheme
+     * ({@code s3a://}, {@code s3://}, {@code file://}, …) are left untouched.
+     */
+    static String normalizeS3Path(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return raw;
+        }
+        String v = raw.trim();
+        return v.contains("://") ? v : "s3a://" + v;
     }
 
     /**
