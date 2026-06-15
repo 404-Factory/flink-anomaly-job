@@ -3,7 +3,7 @@
 #
 # 사전 조건:
 #   - sigma-eks-cluster 에 Flink Kubernetes Operator 설치돼 있어야 함 (FlinkDeployment CRD).
-#   - serviceAccount 'flink' 는 IRSA 로 S3 권한 부여돼 있어야 함 (정적 키 없이 S3 접근).
+#   - serviceAccount 'flink-sa' 는 IRSA 로 S3 권한 부여돼 있어야 함 (정적 키 없이 S3 접근).
 #   - ExternalSecret 이 'flink-anomaly-job-secrets' Secret 을 생성해야 함 (별도 관리, 이 레포 밖).
 #       → S3_BUCKET_NAME, OPENSEARCH_ENDPOINT, CHECKPOINT_DIR 등 환경별 값이 여기서 주입됨.
 apiVersion: flink.apache.org/v1beta1
@@ -14,7 +14,7 @@ metadata:
 spec:
   image: $IMAGE:$IMAGE_TAG          # reusable-deploy 가 ECR 이미지로 치환
   flinkVersion: v1_18
-  serviceAccount: flink             # IRSA 주석이 달린 SA 여야 S3(IRSA) 접근 가능
+  serviceAccount: flink-sa            # IRSA 주석이 달린 SA 여야 S3(IRSA) 접근 가능
   flinkConfiguration:
     taskmanager.numberOfTaskSlots: "4"
     env.java.opts.all: >-
@@ -29,6 +29,10 @@ spec:
     state.checkpoint-storage: jobmanager
     execution.checkpointing.interval: "30s"
     # S3 는 IRSA 로 접근 → endpoint/access-key/secret-key 불필요(로컬 MinIO 설정 제거됨).
+    # IRSA(web identity token) 자격증명을 S3A 가 쓰도록 명시. 기본 자격증명 체인에는
+    # WebIdentityTokenCredentialsProvider 가 없어서, 이게 없으면 IRSA 롤이 붙어 있어도
+    # 체크포인트/Parquet S3 접근이 NoAuthWithAWSException 으로 실패한다.
+    fs.s3a.aws.credentials.provider: com.amazonaws.auth.WebIdentityTokenCredentialsProvider
   jobManager:
     resource:
       memory: "1024m"
