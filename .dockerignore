@@ -2,7 +2,9 @@
 .gitignore
 .github
 README.md
-build
+# Pre-build flow copies build/libs/*.jar — keep it, ignore the rest of build/
+build/*
+!build/libs
 .idea
 *.iml
 *.swp
