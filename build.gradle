@@ -40,13 +40,10 @@ dependencies {
     implementation "org.apache.parquet:parquet-avro:${parquetVersion}"
     implementation "org.apache.avro:avro:${avroVersion}"
 
-    // Parquet writing needs Hadoop classes on the *application* classpath at runtime —
-    // even though the actual S3 filesystem is served by Flink's flink-s3-fs-hadoop plugin.
-    //   - hadoop-common:                Configuration, Path, codecs
-    //   - hadoop-mapreduce-client-core: ParquetOutputFormat -> FileOutputFormat
-    // Bundling these keeps `java -jar` self-contained.
-    implementation "org.apache.hadoop:hadoop-common:${hadoopVersion}"
-    implementation "org.apache.hadoop:hadoop-mapreduce-client-core:${hadoopVersion}"
+    // Hadoop classes are provided by Flink's flink-s3-fs-hadoop plugin at runtime.
+    // Using 'provided' scope excludes them from the fat jar, reducing jar size.
+    provided "org.apache.hadoop:hadoop-common:${hadoopVersion}"
+    provided "org.apache.hadoop:hadoop-mapreduce-client-core:${hadoopVersion}"
 
     // ---- Jackson JSON (Kafka payload deserialization) ----
     implementation "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}"
