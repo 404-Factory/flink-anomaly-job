@@ -1,5 +1,6 @@
 package com.factory.flink.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.List;
@@ -21,6 +22,10 @@ public class SensorDataBatchDto implements Serializable {
 
     private String batchId;
     private String deviceId;
+    // Incoming JSON has a numeric "id" (the equipment's Long id) plus a separate String
+    // "equipmentId" we don't use. Map the Long "id" here; the String "equipmentId" is
+    // ignored (FAIL_ON_UNKNOWN_PROPERTIES=false). deviceId binds to its own JSON field.
+    @JsonProperty("id")
     private Long equipmentId;
     private List<MeasurementDto> measurements;
     private Instant createdAt;

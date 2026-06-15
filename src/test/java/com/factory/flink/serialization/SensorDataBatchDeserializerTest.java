@@ -13,11 +13,14 @@ import org.junit.jupiter.api.Test;
 
 class SensorDataBatchDeserializerTest {
 
+    // Real payload shape: numeric "id" is the equipment Long id (-> equipmentId),
+    // the String "equipmentId" is unused and must be ignored, deviceId is its own field.
     private static final String VALID_JSON = """
             {
               "batchId": "B1",
               "deviceId": "D1",
-              "equipmentId": 1,
+              "id": 1,
+              "equipmentId": "EQP-001",
               "createdAt": "2026-06-13T00:00:00Z",
               "intervalSec": 5,
               "measurements": [
