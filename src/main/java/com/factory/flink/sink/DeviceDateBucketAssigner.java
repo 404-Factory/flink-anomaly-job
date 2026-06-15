@@ -9,43 +9,41 @@ import org.apache.flink.streaming.api.functions.sink.filesystem.BucketAssigner;
 import org.apache.flink.streaming.api.functions.sink.filesystem.bucketassigners.SimpleVersionedStringSerializer;
 
 /**
- * Buckets records into Hive-style partitions {@code dt=YYYY-MM-DD/device_id=<id>}
- * based on the reading's <b>event time</b> ({@code measuredAt}), not arrival time.
- * Partitioned by {@code deviceId} (a string id), keeping the numeric {@code equipmentId}
- * purely as data rather than a path token.
+ * Buckets records into {@code YYYY/MM/DD/<device_id>} partitions based on the
+ * batch's <b>creation time</b> ({@code createdAt}). This mirrors the s3-consumer
+ * layout ({@code YYYY/MM/DD/<equipmentId>/...}), where that service's
+ * {@code equipmentId} is this job's {@code deviceId}, so both writers land data
+ * under the same path shape.
  *
- * <p>Two payoffs:
- * <ul>
- *   <li><b>Query cost</b> — engines prune whole partitions on {@code dt}/{@code device_id}
- *       predicates, scanning far less S3 data.</li>
- *   <li><b>Late data correctness</b> — a delayed message still lands in the partition
- *       of the day it was measured, so out-of-order arrival never corrupts the layout.</li>
- * </ul>
+ * <p>{@code createdAt} is batch-level (denormalized onto every row), so all records
+ * exploded from one batch share a date and land in a single partition — matching
+ * the 1-minute batch file unit rather than splitting a batch across days when its
+ * individual {@code measuredAt} readings straddle midnight.
  *
  * <p>{@code deviceId} is sanitized to a safe partition token to prevent path
  * traversal / injection from untrusted upstream values.
  *
- * <p>The {@code dt} date is derived in <b>UTC</b> — matching the source timestamps
+ * <p>The date is derived in <b>UTC</b> — matching the source timestamps
  * ({@code createdAt}/{@code measuredAt} are UTC) and the daily Glue jobs which pick
  * "yesterday" in UTC. Writer and reader must share the same zone, or the batch jobs
- * would target the wrong {@code dt=} partition near midnight.
+ * would target the wrong date partition near midnight.
  */
 public class DeviceDateBucketAssigner implements BucketAssigner<SensorRecord, String> {
     private static final long serialVersionUID = 1L;
 
     private static final DateTimeFormatter DATE_FMT =
-            DateTimeFormatter.ofPattern("yyyy-MM-dd").withZone(ZoneOffset.UTC);
+            DateTimeFormatter.ofPattern("yyyy/MM/dd").withZone(ZoneOffset.UTC);
     static final String UNKNOWN_DEVICE = "unknown";
 
     @Override
     public String getBucketId(SensorRecord record, Context context) {
-        return bucketId(record.getMeasuredAtEpochMilli(), record.getDeviceId());
+        return bucketId(record.getCreatedAtEpochMilli(), record.getDeviceId());
     }
 
-    /** Pure, testable bucket-path computation. */
-    static String bucketId(long measuredAtEpochMilli, String deviceId) {
-        String date = DATE_FMT.format(Instant.ofEpochMilli(measuredAtEpochMilli));
-        return "dt=" + date + "/device_id=" + sanitize(deviceId);
+    /** Pure, testable bucket-path computation. Produces {@code YYYY/MM/DD/<device_id>}. */
+    static String bucketId(long createdAtEpochMilli, String deviceId) {
+        String date = DATE_FMT.format(Instant.ofEpochMilli(createdAtEpochMilli));
+        return date + "/" + sanitize(deviceId);
     }
 
     /**

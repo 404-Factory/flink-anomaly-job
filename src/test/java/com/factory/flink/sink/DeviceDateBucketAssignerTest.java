@@ -9,25 +9,25 @@ import org.junit.jupiter.api.Test;
 class DeviceDateBucketAssignerTest {
 
     @Test
-    void buildsHiveStylePartitionFromEventTime() {
+    void buildsSlashDatePartitionFromEventTime() {
         long ts = Instant.parse("2026-06-13T15:04:05Z").toEpochMilli();
         assertThat(DeviceDateBucketAssigner.bucketId(ts, "EQP-001"))
-                .isEqualTo("dt=2026-06-13/device_id=EQP-001");
+                .isEqualTo("2026/06/13/EQP-001");
     }
 
     @Test
     void usesUtcDateRegardlessOfTimeOfDay() {
         long ts = Instant.parse("2026-06-13T23:59:59Z").toEpochMilli();
-        assertThat(DeviceDateBucketAssigner.bucketId(ts, "E")).startsWith("dt=2026-06-13/");
+        assertThat(DeviceDateBucketAssigner.bucketId(ts, "E")).startsWith("2026/06/13/");
     }
 
     @Test
     void getBucketIdReadsFromRecord() {
         long ts = Instant.parse("2026-01-02T00:00:00Z").toEpochMilli();
-        SensorRecord r = SensorRecord.builder().deviceId("D9").measuredAtEpochMilli(ts).build();
+        SensorRecord r = SensorRecord.builder().deviceId("D9").createdAtEpochMilli(ts).build();
         DeviceDateBucketAssigner assigner = new DeviceDateBucketAssigner();
         assertThat(assigner.getBucketId(r, null))
-                .isEqualTo("dt=2026-01-02/device_id=D9");
+                .isEqualTo("2026/01/02/D9");
     }
 
     @Test
