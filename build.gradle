@@ -40,10 +40,14 @@ dependencies {
     implementation "org.apache.parquet:parquet-avro:${parquetVersion}"
     implementation "org.apache.avro:avro:${avroVersion}"
 
-    // Hadoop classes are provided by Flink's flink-s3-fs-hadoop plugin at runtime.
-    // Using 'compileOnly' scope excludes them from the fat jar, reducing jar size.
-    compileOnly "org.apache.hadoop:hadoop-common:${hadoopVersion}"
-    compileOnly "org.apache.hadoop:hadoop-mapreduce-client-core:${hadoopVersion}"
+    // Parquet writing needs raw org.apache.hadoop.* classes (Configuration, Path,
+    // FileOutputFormat) on the JOB classpath at runtime. The flink-s3-fs-hadoop
+    // plugin does NOT provide them: it's an isolated classloader with Hadoop shaded
+    // to a relocated package. The Flink base image ships no Hadoop on lib/ and
+    // HADOOP_CLASSPATH is empty. So these MUST be bundled in the fat jar — using
+    // compileOnly here causes a runtime NoClassDefFoundError on the S3 Parquet sink.
+    implementation "org.apache.hadoop:hadoop-common:${hadoopVersion}"
+    implementation "org.apache.hadoop:hadoop-mapreduce-client-core:${hadoopVersion}"
 
     // ---- Jackson JSON (Kafka payload deserialization) ----
     implementation "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}"
