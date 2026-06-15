@@ -28,12 +28,15 @@ public class SensorViolationEnvelopeSerializer implements SerializationSchema<Se
             String severityStr = element.getSeverity() != null ? element.getSeverity().name() : "RECOVERY";
             String idempotencyKey = element.getEquipmentId() + ":" + element.getSensorType() + ":" + severityStr + ":" + element.getDetectedAt().toEpochMilli();
 
+            // No inbound MDC trace context in a streaming job, so mint a fresh trace id
+            // per event — matches MdcTraceIdProvider's fallback (UUID.randomUUID()).
             EventEnvelope<SensorViolationPayload> envelope = EventEnvelope.<SensorViolationPayload>builder()
                 .idempotencyKey(idempotencyKey)
                 .eventType("SensorViolation")
                 .envelopeType("domain")
                 .aggregateType("Equipment")
                 .aggregateId(String.valueOf(element.getEquipmentId()))
+                .traceId(UUID.randomUUID().toString())
                 .timestamp(Instant.now())
                 .payload(SensorViolationPayload.from(element))
                 .build();

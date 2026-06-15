@@ -47,6 +47,8 @@ class SensorViolationEnvelopeSerializerTest {
         assertThat(json.get("aggregateType").asText()).isEqualTo("Equipment");
         assertThat(json.get("aggregateId").asText()).isEqualTo("1");
         assertThat(json.has("timestamp")).isTrue();
+        // a trace id is always minted for correlation (UUID, like MdcTraceIdProvider fallback)
+        assertThat(json.get("traceId").asText()).isNotBlank();
 
         // violation lives under the payload key (this is what the consumer extracts)
         assertThat(json.has("payload")).isTrue();

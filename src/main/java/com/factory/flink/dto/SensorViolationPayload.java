@@ -32,7 +32,7 @@ public class SensorViolationPayload implements Serializable {
     private Double deviationRate;
     private Double min;
     private Double max;
-    private Instant detectedAt;
+    private Instant detectedAt; //management의 occuredTime이랑 연결
     private Instant windowStart;
     private Instant windowEnd;
     private Integer sampleCount;
