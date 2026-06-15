@@ -3,6 +3,9 @@ build/
 .idea/
 out/
 *.class
-*.jar
 *.log
 .env
+
+# Build artifacts - exclude JAR files except gradle wrapper
+*.jar
+!gradle/wrapper/*.jar
