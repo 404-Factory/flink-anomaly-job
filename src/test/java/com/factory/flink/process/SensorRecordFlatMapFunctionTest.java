@@ -2,10 +2,10 @@ package com.factory.flink.process;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.factory.flink.dto.MeasurementDto;
-import com.factory.flink.dto.SensorDataBatchDto;
-import com.factory.flink.dto.SensorReadingDto;
-import com.factory.flink.dto.SensorRecord;
+import com.factory.flink.domain.dto.MeasurementDto;
+import com.factory.flink.domain.dto.SensorDataBatchDto;
+import com.factory.flink.domain.dto.SensorReadingDto;
+import com.factory.flink.domain.dto.SensorRecord;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;

@@ -3,7 +3,6 @@ package com.factory.flink.process;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.factory.flink.dto.SensorRecord;
 import java.time.Duration;
 import java.util.List;
 import org.apache.flink.api.common.typeinfo.Types;
@@ -13,6 +12,8 @@ import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
 import org.apache.flink.streaming.util.KeyedOneInputStreamOperatorTestHarness;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+
+import com.factory.flink.domain.dto.SensorRecord;
 
 class DeduplicationProcessFunctionTest {
 

@@ -1,8 +1,9 @@
 package com.factory.flink.opensearch;
 
-import com.factory.flink.dto.SensorRecord;
 import java.util.LinkedHashMap;
 import java.util.Map;
+
+import com.factory.flink.domain.dto.SensorRecord;
 
 /**
  * Maps a {@link SensorRecord} to an OpenSearch document: a deterministic {@code _id}

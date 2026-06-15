@@ -1,6 +1,6 @@
 package com.factory.flink.serialization;
 
-import com.factory.flink.dto.SensorDataBatchDto;
+import com.factory.flink.domain.dto.SensorDataBatchDto;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;

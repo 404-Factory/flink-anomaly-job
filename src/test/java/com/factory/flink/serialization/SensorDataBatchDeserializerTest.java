@@ -3,7 +3,7 @@ package com.factory.flink.serialization;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.factory.flink.dto.SensorDataBatchDto;
+import com.factory.flink.domain.dto.SensorDataBatchDto;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;

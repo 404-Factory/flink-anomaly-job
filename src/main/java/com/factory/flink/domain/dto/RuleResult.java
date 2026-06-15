@@ -1,10 +1,14 @@
-package com.factory.flink.dto;
+package com.factory.flink.domain.dto;
 
 import java.io.Serializable;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import com.factory.flink.domain.enums.AnomalyType;
+import com.factory.flink.domain.enums.RuleName;
+import com.factory.flink.domain.enums.Severity;
 
 @Data
 @NoArgsConstructor

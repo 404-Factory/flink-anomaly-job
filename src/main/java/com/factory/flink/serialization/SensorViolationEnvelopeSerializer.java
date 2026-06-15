@@ -1,8 +1,8 @@
 package com.factory.flink.serialization;
 
-import com.factory.flink.dto.EventEnvelope;
-import com.factory.flink.dto.SensorViolationEvent;
-import com.factory.flink.dto.SensorViolationPayload;
+import com.factory.flink.domain.dto.EventEnvelope;
+import com.factory.flink.domain.dto.SensorViolationEvent;
+import com.factory.flink.domain.dto.SensorViolationPayload;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;

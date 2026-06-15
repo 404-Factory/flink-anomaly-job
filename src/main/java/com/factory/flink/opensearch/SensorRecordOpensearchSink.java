@@ -1,7 +1,8 @@
 package com.factory.flink.opensearch;
 
 import com.factory.flink.config.JobConfig;
-import com.factory.flink.dto.SensorRecord;
+import com.factory.flink.domain.dto.SensorRecord;
+
 import org.apache.flink.connector.base.DeliveryGuarantee;
 import org.apache.flink.connector.opensearch.sink.OpensearchSink;
 import org.apache.flink.connector.opensearch.sink.OpensearchSinkBuilder;

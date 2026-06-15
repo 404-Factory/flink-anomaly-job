@@ -1,12 +1,13 @@
 package com.factory.flink.process.engine;
 
-import com.factory.flink.dto.AnomalyType;
-import com.factory.flink.dto.RuleName;
-import com.factory.flink.dto.RuleResult;
-import com.factory.flink.dto.SensorReadingEvent;
-import com.factory.flink.dto.Severity;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.factory.flink.domain.dto.RuleResult;
+import com.factory.flink.domain.dto.SensorReadingEvent;
+import com.factory.flink.domain.enums.Severity;
+import com.factory.flink.domain.enums.AnomalyType;
+import com.factory.flink.domain.enums.RuleName;
 
 public class Rule1Engine implements RuleEngine {
 

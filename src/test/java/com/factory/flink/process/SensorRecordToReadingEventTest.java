@@ -2,8 +2,8 @@ package com.factory.flink.process;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.factory.flink.dto.SensorReadingEvent;
-import com.factory.flink.dto.SensorRecord;
+import com.factory.flink.domain.dto.SensorReadingEvent;
+import com.factory.flink.domain.dto.SensorRecord;
 import org.junit.jupiter.api.Test;
 
 class SensorRecordToReadingEventTest {

@@ -35,7 +35,7 @@ class JobConfigTest {
         env.put("KAFKA_BOOTSTRAP_SERVERS", "broker:9092");
         env.put("KAFKA_SOURCE_TOPIC", "topic-x");
         env.put("KAFKA_GROUP_ID", "g1");
-        env.put("S3_OUTPUT_PATH", "s3a://bucket/prefix");
+        env.put("S3_BUCKET_NAME", "s3a://bucket/prefix");
         env.put("START_FROM_EARLIEST", "false");
         env.put("CHECKPOINT_INTERVAL_MS", "30000");
         env.put("DEDUP_TTL_HOURS", "12");

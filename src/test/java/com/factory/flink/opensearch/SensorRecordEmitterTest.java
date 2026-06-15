@@ -2,7 +2,6 @@ package com.factory.flink.opensearch;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.factory.flink.dto.SensorRecord;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.flink.connector.opensearch.sink.RequestIndexer;
@@ -11,6 +10,8 @@ import org.opensearch.action.DocWriteRequest;
 import org.opensearch.action.delete.DeleteRequest;
 import org.opensearch.action.index.IndexRequest;
 import org.opensearch.action.update.UpdateRequest;
+
+import com.factory.flink.domain.dto.SensorRecord;
 
 class SensorRecordEmitterTest {
 

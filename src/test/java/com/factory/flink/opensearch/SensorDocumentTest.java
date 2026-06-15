@@ -2,9 +2,10 @@ package com.factory.flink.opensearch;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.factory.flink.dto.SensorRecord;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
+
+import com.factory.flink.domain.dto.SensorRecord;
 
 class SensorDocumentTest {
 

@@ -1,9 +1,10 @@
 package com.factory.flink.sink;
 
-import com.factory.flink.dto.SensorRecord;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
+
+import com.factory.flink.domain.dto.SensorRecord;
 
 /**
  * Converts a {@link SensorRecord} into an Avro {@link GenericRecord} matching

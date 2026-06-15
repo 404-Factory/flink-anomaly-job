@@ -1,14 +1,15 @@
 package com.factory.flink.process;
 
-import com.factory.flink.dto.MeasurementDto;
-import com.factory.flink.dto.SensorDataBatchDto;
-import com.factory.flink.dto.SensorReadingDto;
-import com.factory.flink.dto.SensorRecord;
 import java.time.Instant;
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.util.Collector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.factory.flink.domain.dto.MeasurementDto;
+import com.factory.flink.domain.dto.SensorDataBatchDto;
+import com.factory.flink.domain.dto.SensorReadingDto;
+import com.factory.flink.domain.dto.SensorRecord;
 
 /**
  * Explodes a nested {@link SensorDataBatchDto} into one {@link SensorRecord} per

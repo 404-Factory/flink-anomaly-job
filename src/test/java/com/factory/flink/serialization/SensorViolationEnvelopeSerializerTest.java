@@ -1,9 +1,9 @@
 package com.factory.flink.serialization;
 
-import com.factory.flink.dto.AnomalyType;
-import com.factory.flink.dto.RuleName;
-import com.factory.flink.dto.SensorViolationEvent;
-import com.factory.flink.dto.Severity;
+import com.factory.flink.domain.dto.SensorViolationEvent;
+import com.factory.flink.domain.enums.AnomalyType;
+import com.factory.flink.domain.enums.RuleName;
+import com.factory.flink.domain.enums.Severity;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;

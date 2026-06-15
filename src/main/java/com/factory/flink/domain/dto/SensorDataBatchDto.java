@@ -1,4 +1,4 @@
-package com.factory.flink.dto;
+package com.factory.flink.domain.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.io.Serializable;

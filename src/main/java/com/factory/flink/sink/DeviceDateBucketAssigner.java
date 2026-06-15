@@ -1,12 +1,13 @@
 package com.factory.flink.sink;
 
-import com.factory.flink.dto.SensorRecord;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 import org.apache.flink.streaming.api.functions.sink.filesystem.BucketAssigner;
 import org.apache.flink.streaming.api.functions.sink.filesystem.bucketassigners.SimpleVersionedStringSerializer;
+
+import com.factory.flink.domain.dto.SensorRecord;
 
 /**
  * Buckets records into {@code YYYY/MM/DD/<device_id>} partitions based on the

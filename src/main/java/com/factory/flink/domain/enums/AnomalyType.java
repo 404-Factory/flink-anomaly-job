@@ -1,4 +1,4 @@
-package com.factory.flink.dto;
+package com.factory.flink.domain.enums;
 
 public enum AnomalyType {
     HIGH,

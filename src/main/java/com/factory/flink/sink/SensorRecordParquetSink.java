@@ -1,6 +1,5 @@
 package com.factory.flink.sink;
 
-import com.factory.flink.dto.SensorRecord;
 import java.io.IOException;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.flink.api.common.serialization.BulkWriter;
@@ -10,6 +9,8 @@ import org.apache.flink.formats.parquet.ParquetWriterFactory;
 import org.apache.flink.formats.parquet.avro.AvroParquetWriters;
 import org.apache.flink.streaming.api.functions.sink.filesystem.OutputFileConfig;
 import org.apache.flink.streaming.api.functions.sink.filesystem.rollingpolicies.OnCheckpointRollingPolicy;
+
+import com.factory.flink.domain.dto.SensorRecord;
 
 /**
  * Builds the exactly-once Parquet {@link FileSink} that writes flattened sensor

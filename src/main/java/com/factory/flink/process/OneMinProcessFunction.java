@@ -1,10 +1,10 @@
 package com.factory.flink.process;
 
-import com.factory.flink.dto.RuleName;
-import com.factory.flink.dto.RuleResult;
-import com.factory.flink.dto.SensorReadingEvent;
-import com.factory.flink.dto.SensorViolationEvent;
-import com.factory.flink.dto.Severity;
+import com.factory.flink.domain.dto.RuleResult;
+import com.factory.flink.domain.dto.SensorReadingEvent;
+import com.factory.flink.domain.dto.SensorViolationEvent;
+import com.factory.flink.domain.enums.Severity;
+import com.factory.flink.domain.enums.RuleName;
 import com.factory.flink.process.engine.Rule3Engine;
 import com.factory.flink.process.engine.RuleEngine;
 import org.apache.flink.api.common.state.ListState;

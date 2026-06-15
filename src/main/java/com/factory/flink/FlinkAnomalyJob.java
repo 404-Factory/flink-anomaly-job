@@ -1,10 +1,10 @@
 package com.factory.flink;
 
 import com.factory.flink.config.JobConfig;
-import com.factory.flink.dto.SensorDataBatchDto;
-import com.factory.flink.dto.SensorReadingEvent;
-import com.factory.flink.dto.SensorRecord;
-import com.factory.flink.dto.SensorViolationEvent;
+import com.factory.flink.domain.dto.SensorDataBatchDto;
+import com.factory.flink.domain.dto.SensorReadingEvent;
+import com.factory.flink.domain.dto.SensorRecord;
+import com.factory.flink.domain.dto.SensorViolationEvent;
 import com.factory.flink.opensearch.SensorRecordOpensearchSink;
 import com.factory.flink.process.DeduplicationProcessFunction;
 import com.factory.flink.process.FiveMinProcessFunction;

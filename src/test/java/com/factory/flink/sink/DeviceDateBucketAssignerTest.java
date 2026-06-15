@@ -2,7 +2,7 @@ package com.factory.flink.sink;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.factory.flink.dto.SensorRecord;
+import com.factory.flink.domain.dto.SensorRecord;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
 

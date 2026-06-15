@@ -1,4 +1,4 @@
-package com.factory.flink.dto;
+package com.factory.flink.domain.dto;
 
 import java.io.Serializable;
 import lombok.AllArgsConstructor;

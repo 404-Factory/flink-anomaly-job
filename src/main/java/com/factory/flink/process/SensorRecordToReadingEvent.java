@@ -1,8 +1,9 @@
 package com.factory.flink.process;
 
-import com.factory.flink.dto.SensorReadingEvent;
-import com.factory.flink.dto.SensorRecord;
 import org.apache.flink.api.common.functions.MapFunction;
+
+import com.factory.flink.domain.dto.SensorReadingEvent;
+import com.factory.flink.domain.dto.SensorRecord;
 
 /**
  * Adapts the shared {@link SensorRecord} (flattened once) into the {@link SensorReadingEvent} shape

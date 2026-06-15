@@ -1,8 +1,5 @@
 package com.factory.flink.process;
 
-import com.factory.flink.dto.RuleName;
-import com.factory.flink.dto.SensorViolationEvent;
-import com.factory.flink.dto.Severity;
 import java.util.Objects;
 import org.apache.flink.api.common.state.MapState;
 import org.apache.flink.api.common.state.MapStateDescriptor;
@@ -10,6 +7,10 @@ import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
 import org.apache.flink.util.Collector;
+
+import com.factory.flink.domain.dto.SensorViolationEvent;
+import com.factory.flink.domain.enums.Severity;
+import com.factory.flink.domain.enums.RuleName;
 
 public class TransitionProcessFunction extends
     KeyedProcessFunction<String, SensorViolationEvent, SensorViolationEvent> {

@@ -1,7 +1,10 @@
-package com.factory.flink.dto;
+package com.factory.flink.domain.dto;
 
 import java.io.Serializable;
 import java.time.Instant;
+
+import com.factory.flink.domain.enums.Severity;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

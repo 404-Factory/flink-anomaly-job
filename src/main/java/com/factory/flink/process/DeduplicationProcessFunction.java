@@ -1,6 +1,5 @@
 package com.factory.flink.process;
 
-import com.factory.flink.dto.SensorRecord;
 import java.time.Duration;
 import org.apache.flink.api.common.state.StateTtlConfig;
 import org.apache.flink.api.common.state.ValueState;
@@ -10,6 +9,8 @@ import org.apache.flink.api.common.typeinfo.Types;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
 import org.apache.flink.util.Collector;
+
+import com.factory.flink.domain.dto.SensorRecord;
 
 /**
  * Drops duplicate {@link SensorRecord}s. The stream must be keyed by

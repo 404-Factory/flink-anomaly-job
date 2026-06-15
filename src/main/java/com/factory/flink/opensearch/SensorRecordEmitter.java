@@ -1,10 +1,11 @@
 package com.factory.flink.opensearch;
 
-import com.factory.flink.dto.SensorRecord;
 import org.apache.flink.api.connector.sink2.SinkWriter;
 import org.apache.flink.connector.opensearch.sink.OpensearchEmitter;
 import org.apache.flink.connector.opensearch.sink.RequestIndexer;
 import org.opensearch.action.index.IndexRequest;
+
+import com.factory.flink.domain.dto.SensorRecord;
 
 /**
  * Turns each {@link SensorRecord} into an OpenSearch {@link IndexRequest} keyed by
