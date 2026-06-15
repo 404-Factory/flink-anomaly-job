@@ -25,7 +25,7 @@ jobs:
       platforms: ${{ vars.PLATFORM }}
       java-version: "17"
       pre-build-command: "./gradlew build -x test --no-daemon"
-      push-on-ref: refs/heads/dev
+      push-on-ref: refs/heads/main
     secrets:
       aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
       aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -33,7 +33,7 @@ jobs:
 
   deploy:
     needs: build
-    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     uses: 404-Factory/.github/.github/workflows/reusable-deploy.yml@dev
     permissions:
       contents: read
