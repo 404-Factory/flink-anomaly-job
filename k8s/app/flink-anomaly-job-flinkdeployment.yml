@@ -4,8 +4,8 @@
 # 사전 조건:
 #   - sigma-eks-cluster 에 Flink Kubernetes Operator 설치돼 있어야 함 (FlinkDeployment CRD).
 #   - serviceAccount 'flink' 는 IRSA 로 S3 권한 부여돼 있어야 함 (정적 키 없이 S3 접근).
-#   - ExternalSecret 이 'flink-anomaly-job-secrets' Secret 을 생성해야 함 (external-secret.yaml 참고).
-#       → S3_OUTPUT_PATH, OPENSEARCH_HOST, CHECKPOINT_DIR 등 환경별 값이 여기서 주입됨.
+#   - ExternalSecret 이 'flink-anomaly-job-secrets' Secret 을 생성해야 함 (별도 관리, 이 레포 밖).
+#       → S3_BUCKET_NAME, OPENSEARCH_ENDPOINT, CHECKPOINT_DIR 등 환경별 값이 여기서 주입됨.
 apiVersion: flink.apache.org/v1beta1
 kind: FlinkDeployment
 metadata:
@@ -42,7 +42,7 @@ spec:
       containers:
         - name: flink-main-container
           # 환경별 비밀/설정값은 ExternalSecret 이 만든 Secret 에서 주입.
-          # (S3_OUTPUT_PATH, OPENSEARCH_HOST, CHECKPOINT_DIR, 필요시 OPENSEARCH_USERNAME/PASSWORD 등)
+          # (S3_BUCKET_NAME, OPENSEARCH_ENDPOINT, CHECKPOINT_DIR, 필요시 OPENSEARCH_USERNAME/PASSWORD 등)
           envFrom:
             - secretRef:
                 name: flink-anomaly-job-secrets
