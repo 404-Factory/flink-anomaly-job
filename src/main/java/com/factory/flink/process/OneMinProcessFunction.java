@@ -19,7 +19,9 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-public class OneMinProcessFunction extends KeyedProcessFunction<String, SensorReadingEvent, SensorViolationEvent> {
+public class OneMinProcessFunction extends
+    KeyedProcessFunction<String, SensorReadingEvent, SensorViolationEvent> {
+
     private static final long serialVersionUID = 1L;
 
     private transient ListState<SensorReadingEvent> sampleState;
@@ -28,15 +30,16 @@ public class OneMinProcessFunction extends KeyedProcessFunction<String, SensorRe
     @Override
     public void open(Configuration parameters) throws Exception {
         ListStateDescriptor<SensorReadingEvent> sampleDescriptor = new ListStateDescriptor<>(
-                "sensor-samples-1min",
-                TypeInformation.of(SensorReadingEvent.class)
+            "sensor-samples-1min",
+            TypeInformation.of(SensorReadingEvent.class)
         );
         sampleState = getRuntimeContext().getListState(sampleDescriptor);
         rule3Engine = new Rule3Engine();
     }
 
     @Override
-    public void processElement(SensorReadingEvent newEvent, Context ctx, Collector<SensorViolationEvent> out) throws Exception {
+    public void processElement(SensorReadingEvent newEvent, Context ctx,
+        Collector<SensorViolationEvent> out) throws Exception {
         // 1. Add new record to list state
         sampleState.add(newEvent);
 
@@ -70,20 +73,22 @@ public class OneMinProcessFunction extends KeyedProcessFunction<String, SensorRe
         RuleResult r3Result = rule3Engine.evaluate(validSamples, recipeMin, recipeMax);
         if (r3Result != null) {
             if (r3Result.isDetected()) {
-                out.collect(SensorViolationEvent.from(newEvent, r3Result, validSamples.size(), windowStart, windowEnd));
+                out.collect(
+                    SensorViolationEvent.from(newEvent, r3Result, validSamples.size(), windowStart,
+                        windowEnd));
             } else {
                 out.collect(SensorViolationEvent.builder()
-                        .equipmentId(newEvent.getEquipmentId())
-                        .sensorId(newEvent.getSensorId())
-                        .sensorType(newEvent.getSensorType())
-                        .ruleName(RuleName.NELSON_RULE_3)
-                        .severity(null)
-                        .detectedAt(windowEnd)
-                        .windowStart(windowStart)
-                        .windowEnd(windowEnd)
-                        .sampleCount(validSamples.size())
-                        .reason("정상 범위 복구 (NELSON_RULE_3)")
-                        .build());
+                    .equipmentId(newEvent.getEquipmentId())
+                    .sensorId(newEvent.getSensorId())
+                    .sensorType(newEvent.getSensorType())
+                    .ruleName(RuleName.NELSON_RULE_3)
+                    .severity(Severity.NORMAL)
+                    .detectedAt(windowEnd)
+                    .windowStart(windowStart)
+                    .windowEnd(windowEnd)
+                    .sampleCount(validSamples.size())
+                    .reason("정상 범위 복구 (NELSON_RULE_3)")
+                    .build());
             }
         }
     }

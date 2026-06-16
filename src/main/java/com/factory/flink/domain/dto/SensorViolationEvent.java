@@ -17,6 +17,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class SensorViolationEvent implements Serializable {
+
     private static final long serialVersionUID = 1L;
 
     private Long equipmentId;
@@ -38,26 +39,27 @@ public class SensorViolationEvent implements Serializable {
     private Integer sampleCount;
     private String reason;
 
-    public static SensorViolationEvent from(SensorReadingEvent reading, RuleResult result, int sampleCount,
-                                            Instant windowStart, Instant windowEnd) {
+    public static SensorViolationEvent from(SensorReadingEvent reading, RuleResult result,
+        int sampleCount, Instant windowStart, Instant windowEnd) {
+
         return SensorViolationEvent.builder()
-                .equipmentId(reading.getEquipmentId())
-                .sensorId(reading.getSensorId())
-                .sensorType(reading.getSensorType())
-                .ruleName(result.getRuleName())
-                .anomalyType(result.getAnomalyType())
-                .severity(result.getSeverity())
-                .measuredValue(result.getMeasuredValue())
-                .referenceValue(result.getReferenceValue())
-                .deviation(result.getDeviation())
-                .deviationRate(result.getDeviationRate())
-                .min(reading.getRecipeMin())
-                .max(reading.getRecipeMax())
-                .detectedAt(Instant.ofEpochMilli(reading.getMeasuredAtEpochMilli()))
-                .windowStart(windowStart)
-                .windowEnd(windowEnd)
-                .sampleCount(sampleCount)
-                .reason(result.getReason())
-                .build();
+            .equipmentId(reading.getEquipmentId())
+            .sensorId(reading.getSensorId())
+            .sensorType(reading.getSensorType())
+            .ruleName(result.getRuleName())
+            .anomalyType(result.getAnomalyType())
+            .severity(result.getSeverity())
+            .measuredValue(result.getMeasuredValue())
+            .referenceValue(result.getReferenceValue())
+            .deviation(result.getDeviation())
+            .deviationRate(result.getDeviationRate())
+            .min(reading.getRecipeMin())
+            .max(reading.getRecipeMax())
+            .detectedAt(Instant.ofEpochMilli(reading.getMeasuredAtEpochMilli()))
+            .windowStart(windowStart)
+            .windowEnd(windowEnd)
+            .sampleCount(sampleCount)
+            .reason(result.getReason())
+            .build();
     }
 }

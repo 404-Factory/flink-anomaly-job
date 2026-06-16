@@ -15,6 +15,7 @@ import com.factory.flink.domain.enums.Severity;
 @AllArgsConstructor
 @Builder
 public class RuleResult implements Serializable {
+
     private static final long serialVersionUID = 1L;
 
     private boolean detected;
@@ -32,17 +33,18 @@ public class RuleResult implements Serializable {
     }
 
     public static RuleResult detected(RuleName ruleName, Severity severity, AnomalyType anomalyType,
-                                     Double measuredValue, Double referenceValue, Double deviation, Double deviationRate, String reason) {
+        Double measuredValue, Double referenceValue, Double deviation, Double deviationRate,
+        String reason) {
         return RuleResult.builder()
-                .detected(true)
-                .ruleName(ruleName)
-                .severity(severity)
-                .anomalyType(anomalyType)
-                .measuredValue(measuredValue)
-                .referenceValue(referenceValue)
-                .deviation(deviation)
-                .deviationRate(deviationRate)
-                .reason(reason)
-                .build();
+            .detected(true)
+            .ruleName(ruleName)
+            .severity(severity)
+            .anomalyType(anomalyType)
+            .measuredValue(measuredValue)
+            .referenceValue(referenceValue)
+            .deviation(deviation)
+            .deviationRate(deviationRate)
+            .reason(reason)
+            .build();
     }
 }

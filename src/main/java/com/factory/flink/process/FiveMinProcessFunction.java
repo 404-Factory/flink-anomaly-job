@@ -22,7 +22,9 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-public class FiveMinProcessFunction extends KeyedProcessFunction<String, SensorReadingEvent, SensorViolationEvent> {
+public class FiveMinProcessFunction extends
+    KeyedProcessFunction<String, SensorReadingEvent, SensorViolationEvent> {
+
     private static final long serialVersionUID = 1L;
 
     private transient ListState<SensorReadingEvent> sampleState;
@@ -35,20 +37,20 @@ public class FiveMinProcessFunction extends KeyedProcessFunction<String, SensorR
     @Override
     public void open(Configuration parameters) throws Exception {
         ListStateDescriptor<SensorReadingEvent> sampleDescriptor = new ListStateDescriptor<>(
-                "sensor-samples-5min",
-                TypeInformation.of(SensorReadingEvent.class)
+            "sensor-samples-5min",
+            TypeInformation.of(SensorReadingEvent.class)
         );
         sampleState = getRuntimeContext().getListState(sampleDescriptor);
 
         ValueStateDescriptor<Integer> batchCountDescriptor = new ValueStateDescriptor<>(
-                "batch-count-5min",
-                TypeInformation.of(Integer.class)
+            "batch-count-5min",
+            TypeInformation.of(Integer.class)
         );
         batchCountState = getRuntimeContext().getState(batchCountDescriptor);
 
         ValueStateDescriptor<String> lastBatchIdDescriptor = new ValueStateDescriptor<>(
-                "last-batch-id-5min",
-                TypeInformation.of(String.class)
+            "last-batch-id-5min",
+            TypeInformation.of(String.class)
         );
         lastBatchIdState = getRuntimeContext().getState(lastBatchIdDescriptor);
 
@@ -57,7 +59,8 @@ public class FiveMinProcessFunction extends KeyedProcessFunction<String, SensorR
     }
 
     @Override
-    public void processElement(SensorReadingEvent newEvent, Context ctx, Collector<SensorViolationEvent> out) throws Exception {
+    public void processElement(SensorReadingEvent newEvent, Context ctx,
+        Collector<SensorViolationEvent> out) throws Exception {
         // 1. Add new record to list state
         sampleState.add(newEvent);
 
@@ -112,20 +115,22 @@ public class FiveMinProcessFunction extends KeyedProcessFunction<String, SensorR
         RuleResult r1Result = rule1Engine.evaluate(validSamples, recipeMin, recipeMax);
         if (r1Result != null) {
             if (r1Result.isDetected()) {
-                out.collect(SensorViolationEvent.from(newEvent, r1Result, validSamples.size(), windowStart, windowEnd));
+                out.collect(
+                    SensorViolationEvent.from(newEvent, r1Result, validSamples.size(), windowStart,
+                        windowEnd));
             } else {
                 out.collect(SensorViolationEvent.builder()
-                        .equipmentId(newEvent.getEquipmentId())
-                        .sensorId(newEvent.getSensorId())
-                        .sensorType(newEvent.getSensorType())
-                        .ruleName(RuleName.NELSON_RULE_1)
-                        .severity(null)
-                        .detectedAt(windowEnd)
-                        .windowStart(windowStart)
-                        .windowEnd(windowEnd)
-                        .sampleCount(validSamples.size())
-                        .reason("정상 범위 복구 (NELSON_RULE_1)")
-                        .build());
+                    .equipmentId(newEvent.getEquipmentId())
+                    .sensorId(newEvent.getSensorId())
+                    .sensorType(newEvent.getSensorType())
+                    .ruleName(RuleName.NELSON_RULE_1)
+                    .severity(Severity.NORMAL)
+                    .detectedAt(windowEnd)
+                    .windowStart(windowStart)
+                    .windowEnd(windowEnd)
+                    .sampleCount(validSamples.size())
+                    .reason("정상 범위 복구 (NELSON_RULE_1)")
+                    .build());
             }
         }
 
@@ -133,20 +138,21 @@ public class FiveMinProcessFunction extends KeyedProcessFunction<String, SensorR
         RuleResult biasResult = biasEngine.evaluate(validSamples, recipeMin, recipeMax);
         if (biasResult != null) {
             if (biasResult.isDetected()) {
-                out.collect(SensorViolationEvent.from(newEvent, biasResult, validSamples.size(), windowStart, windowEnd));
+                out.collect(SensorViolationEvent.from(newEvent, biasResult, validSamples.size(),
+                    windowStart, windowEnd));
             } else {
                 out.collect(SensorViolationEvent.builder()
-                        .equipmentId(newEvent.getEquipmentId())
-                        .sensorId(newEvent.getSensorId())
-                        .sensorType(newEvent.getSensorType())
-                        .ruleName(RuleName.BIAS_RATIO_RULE)
-                        .severity(null)
-                        .detectedAt(windowEnd)
-                        .windowStart(windowStart)
-                        .windowEnd(windowEnd)
-                        .sampleCount(validSamples.size())
-                        .reason("정상 범위 복구 (BIAS_RATIO_RULE)")
-                        .build());
+                    .equipmentId(newEvent.getEquipmentId())
+                    .sensorId(newEvent.getSensorId())
+                    .sensorType(newEvent.getSensorType())
+                    .ruleName(RuleName.BIAS_RATIO_RULE)
+                    .severity(Severity.NORMAL)
+                    .detectedAt(windowEnd)
+                    .windowStart(windowStart)
+                    .windowEnd(windowEnd)
+                    .sampleCount(validSamples.size())
+                    .reason("정상 범위 복구 (BIAS_RATIO_RULE)")
+                    .build());
             }
         }
     }
