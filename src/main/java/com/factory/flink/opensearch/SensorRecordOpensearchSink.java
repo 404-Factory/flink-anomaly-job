@@ -4,8 +4,8 @@ import com.factory.flink.config.JobConfig;
 import com.factory.flink.domain.dto.SensorRecord;
 
 import org.apache.flink.connector.base.DeliveryGuarantee;
-import org.apache.flink.connector.opensearch.sink.OpensearchSink;
-import org.apache.flink.connector.opensearch.sink.OpensearchSinkBuilder;
+import org.apache.flink.connector.opensearch.sink.Opensearch2Sink;
+import org.apache.flink.connector.opensearch.sink.Opensearch2SinkBuilder;
 import org.apache.http.HttpHost;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,8 +31,8 @@ public final class SensorRecordOpensearchSink {
     private SensorRecordOpensearchSink() {
     }
 
-    public static OpensearchSink<SensorRecord> create(JobConfig cfg) {
-        OpensearchSinkBuilder<SensorRecord> builder = new OpensearchSinkBuilder<SensorRecord>()
+    public static Opensearch2Sink<SensorRecord> create(JobConfig cfg) {
+        Opensearch2SinkBuilder<SensorRecord> builder = new Opensearch2SinkBuilder<SensorRecord>()
                 .setHosts(new HttpHost(cfg.getOpenSearchHost(), cfg.getOpenSearchPort(), cfg.getOpenSearchScheme()))
                 .setEmitter(new SensorRecordEmitter(cfg.getOpenSearchIndex()))
                 .setBulkFlushMaxActions(cfg.getOpenSearchBulkFlushMaxActions())

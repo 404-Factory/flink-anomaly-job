@@ -14,7 +14,7 @@ repositories {
 ext {
     flinkVersion = '1.18.1'
     flinkKafkaVersion = '3.0.1-1.18'
-    openSearchConnectorVersion = '1.1.0-1.18'
+    openSearchConnectorVersion = '2.0.0-1.18'
     parquetVersion = '1.13.1'
     avroVersion = '1.11.3'
     hadoopVersion = '3.3.6'
@@ -34,7 +34,7 @@ dependencies {
     implementation "org.apache.flink:flink-avro:${flinkVersion}"
 
     // ---- OpenSearch sink (realtime branch -> sensor-realtime) ----
-    implementation "org.apache.flink:flink-connector-opensearch:${openSearchConnectorVersion}"
+    implementation "org.apache.flink:flink-connector-opensearch2:${openSearchConnectorVersion}"
 
     // ---- Parquet / Avro (columnar S3 sink) ----
     implementation "org.apache.parquet:parquet-avro:${parquetVersion}"
