@@ -59,7 +59,7 @@ spec:
             - name: KAFKA_GROUP_ID
               value: "flink-anomaly-ingestion"
             - name: OPENSEARCH_PORT
-              value: "9200"
+              value: "443"
             - name: OPENSEARCH_SCHEME
               value: "https"
             - name: OPENSEARCH_INDEX
